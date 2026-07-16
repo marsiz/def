@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Boxes, Mail, Lock, User, Eye, EyeOff, Loader2, ShieldCheck, Clock } from 'lucide-react';
+import { Boxes, Mail, Lock, User, Eye, EyeOff, Loader2, ShieldCheck, Clock, KeyRound } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { session, profile, loading, signIn, signUp, signOut } = useAuth();
   const [mode, setMode] = useState<Mode>('login');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -23,11 +25,19 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (!loading && session && profile) {
       if (profile.is_approved && profile.is_active) {
-        router.push('/dashboard');
+        if (profile.must_change_password) {
+          setShowPasswordChange(true);
+        } else {
+          router.push('/dashboard');
+        }
       }
     }
   }, [loading, session, profile, router]);
@@ -37,25 +47,23 @@ export default function LoginPage() {
     setError(null);
     setSuccess(null);
 
-    if (!email || !password) {
-      setError('Lütfen e-posta ve şifre girin.');
-      return;
-    }
-
-    setSubmitting(true);
-
     if (mode === 'login') {
-      const { error } = await signIn(email, password);
+      if (!emailOrUsername || !password) {
+        setError('Lütfen kullanıcı adı/e-posta ve şifre girin.');
+        return;
+      }
+      setSubmitting(true);
+      const { error } = await signIn(emailOrUsername, password);
       if (error) {
         setError(error);
         setSubmitting(false);
       }
     } else {
-      if (!fullName) {
-        setError('Lütfen ad soyad girin.');
-        setSubmitting(false);
+      if (!email || !password || !fullName) {
+        setError('Lütfen tüm alanları doldurun.');
         return;
       }
+      setSubmitting(true);
       const { error } = await signUp(email, password, fullName);
       if (error) {
         setError(error);
@@ -64,11 +72,56 @@ export default function LoginPage() {
         setSuccess('Hesabınız oluşturuldu! Admin onayını bekleyin. Onaylandıktan sonra giriş yapabilirsiniz.');
         setSubmitting(false);
         setMode('login');
+        setEmailOrUsername(email);
       }
     }
   };
 
-  // Onay bekleyen kullanıcı ekranı
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (newPassword.length < 6) {
+      setError('Yeni şifre en az 6 karakter olmalıdır.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('Şifreler eşleşmiyor.');
+      return;
+    }
+
+    setChangingPassword(true);
+    const { data, error: rpcError } = await supabase.rpc('change_own_password', {
+      p_current_password: password,
+      p_new_password: newPassword,
+    });
+
+    if (rpcError) {
+      setError('Şifre değiştirilemedi: ' + rpcError.message);
+      setChangingPassword(false);
+      return;
+    }
+
+    if (data === false) {
+      setError('Mevcut şifre hatalı.');
+      setChangingPassword(false);
+      return;
+    }
+
+    await supabase.rpc('log_activity', {
+      p_action: 'Şifre Değişikliği',
+      p_module: 'auth',
+      p_details: 'Kullanıcı şifresini değiştirdi',
+    });
+
+    setChangingPassword(false);
+    setShowPasswordChange(false);
+    setNewPassword('');
+    setConfirmPassword('');
+    setPassword('');
+    router.push('/dashboard');
+  };
+
   if (!loading && session && profile && (!profile.is_approved || !profile.is_active)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -102,7 +155,78 @@ export default function LoginPage() {
     );
   }
 
-  // Yükleniyor ekranı
+  if (showPasswordChange) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="relative z-10 w-full max-w-md"
+        >
+          <Card className="glass-strong border-border/60">
+            <CardHeader className="space-y-3 text-center">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.1, type: 'spring' }}
+                className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent shadow-xl shadow-primary/30"
+              >
+                <KeyRound className="h-7 w-7 text-white" />
+              </motion.div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">Şifre Değiştirme Zorunlu</h1>
+                <p className="text-sm text-muted-foreground">Güvenliğiniz için şifrenizi değiştirmeniz gerekmektedir</p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleChangePassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Mevcut Şifre</Label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Yeni Şifre</Label>
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Yeni Şifre (Tekrar)</Label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                  />
+                </div>
+                {error && (
+                  <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+                )}
+                <Button type="submit" disabled={changingPassword} className="w-full gap-2">
+                  {changingPassword && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Şifreyi Değiştir ve Devam Et
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -111,10 +235,8 @@ export default function LoginPage() {
     );
   }
 
-  // Giriş/Kayıt ekranı
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
-      {/* Arka plan dekoratif */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
@@ -143,7 +265,6 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {/* Mod geçiş */}
             <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted/30 p-1">
               <button
                 onClick={() => { setMode('login'); setError(null); setSuccess(null); }}
@@ -200,19 +321,34 @@ export default function LoginPage() {
                 )}
               </AnimatePresence>
 
-              <div className="space-y-2">
-                <Label>E-posta</Label>
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ornek@marsiz.com"
-                    className="pl-9"
-                  />
+              {mode === 'login' ? (
+                <div className="space-y-2">
+                  <Label>Kullanıcı Adı veya E-posta</Label>
+                  <div className="relative">
+                    <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={emailOrUsername}
+                      onChange={(e) => setEmailOrUsername(e.target.value)}
+                      placeholder="admin veya ornek@marsiz.com"
+                      className="pl-9"
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>E-posta</Label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="ornek@marsiz.com"
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>Şifre</Label>
@@ -257,14 +393,12 @@ export default function LoginPage() {
               </p>
             )}
 
-            <div className="pt-2 text-center">
-              <button
-                onClick={() => router.push('/setup')}
-                className="text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
-              >
-                İlk kurulum mu? Admin hesabı oluşturun
-              </button>
-            </div>
+            {mode === 'login' && (
+              <div className="rounded-lg bg-muted/30 p-3 text-center text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">İlk Giriş Bilgileri</p>
+                <p className="mt-1">Kullanıcı: <span className="font-mono">admin</span> — Şifre: <span className="font-mono">admin123</span></p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>

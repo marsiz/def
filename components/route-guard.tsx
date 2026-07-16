@@ -1,24 +1,25 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
+import { hasPermission } from '@/lib/permissions';
+import { getModuleByHref } from '@/lib/modules';
 import { Loader2 } from 'lucide-react';
+import { NoAccessScreen } from '@/components/no-access';
 
 export function RouteGuard({ children }: { children: React.ReactNode }) {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, permissions, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading) {
       if (!session) {
         router.push('/login');
       } else if (profile && (!profile.is_approved || !profile.is_active)) {
-        // Logged in but not approved — redirect to login which shows pending screen
         router.push('/login');
       } else if (!profile) {
-        // Session exists but profile fetch failed — could be a race condition
-        // Give a short delay then redirect to login
         const timer = setTimeout(() => {
           router.push('/login');
         }, 3000);
@@ -36,6 +37,11 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     );
+  }
+
+  const mod = getModuleByHref(pathname);
+  if (mod && !hasPermission(permissions, profile.role, mod.key, 'view')) {
+    return <NoAccessScreen moduleName={mod.label} />;
   }
 
   return <>{children}</>;

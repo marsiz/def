@@ -915,11 +915,23 @@ video {
 .max-h-screen {
   max-height: 100vh;
 }
+.max-h-32 {
+  max-height: 8rem;
+}
+.max-h-60 {
+  max-height: 15rem;
+}
+.max-h-\[80vh\] {
+  max-height: 80vh;
+}
 .min-h-\[80px\] {
   min-height: 80px;
 }
 .min-h-screen {
   min-height: 100vh;
+}
+.min-h-\[60vh\] {
+  min-height: 60vh;
 }
 .w-0 {
   width: 0px;
@@ -1027,6 +1039,9 @@ video {
 }
 .min-w-\[var\(--radix-select-trigger-width\)\] {
   min-width: var(--radix-select-trigger-width);
+}
+.min-w-\[80px\] {
+  min-width: 80px;
 }
 .max-w-2xl {
   max-width: 42rem;
@@ -1150,6 +1165,9 @@ video {
 }
 .grid-cols-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.grid-cols-\[1fr_auto_auto_auto_auto\] {
+  grid-template-columns: 1fr auto auto auto auto;
 }
 .flex-row {
   flex-direction: row;
@@ -1376,6 +1394,9 @@ video {
 .border-warning\/50 {
   border-color: hsl(var(--warning) / 0.5);
 }
+.border-border\/30 {
+  border-color: hsl(var(--border) / 0.3);
+}
 .border-l-primary {
   border-left-color: hsl(var(--primary));
 }
@@ -1495,6 +1516,9 @@ video {
 .bg-white {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
+}
+.bg-destructive\/5 {
+  background-color: hsl(var(--destructive) / 0.05);
 }
 .bg-\[radial-gradient\(circle_at_50\%_50\%\2c hsl\(var\(--primary\)\/0\.1\)\2c transparent_70\%\)\] {
   background-image: radial-gradient(circle at 50% 50%,hsl(var(--primary)/0.1),transparent 70%);
@@ -1690,6 +1714,9 @@ video {
 .pt-4 {
   padding-top: 1rem;
 }
+.pb-2 {
+  padding-bottom: 0.5rem;
+}
 .text-left {
   text-align: left;
 }
@@ -1845,6 +1872,9 @@ video {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+.text-accent {
+  color: hsl(var(--accent));
 }
 .underline-offset-4 {
   text-underline-offset: 4px;
@@ -2072,11 +2102,28 @@ video {
   background: linear-gradient(90deg, transparent, hsl(var(--muted)/0.5), transparent);
   animation: shimmer 1.5s infinite;
 }
+.file\:mr-4::file-selector-button {
+  margin-right: 1rem;
+}
+.file\:rounded-lg::file-selector-button {
+  border-radius: var(--radius);
+}
 .file\:border-0::file-selector-button {
   border-width: 0px;
 }
 .file\:bg-transparent::file-selector-button {
   background-color: transparent;
+}
+.file\:bg-primary::file-selector-button {
+  background-color: hsl(var(--primary));
+}
+.file\:px-4::file-selector-button {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.file\:py-2::file-selector-button {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 .file\:text-sm::file-selector-button {
   font-size: 0.875rem;
@@ -2087,6 +2134,9 @@ video {
 }
 .file\:text-foreground::file-selector-button {
   color: hsl(var(--foreground));
+}
+.file\:text-primary-foreground::file-selector-button {
+  color: hsl(var(--primary-foreground));
 }
 .placeholder\:text-muted-foreground::-moz-placeholder {
   color: hsl(var(--muted-foreground));
@@ -2201,6 +2251,9 @@ video {
 .hover\:shadow-primary\/5:hover {
   --tw-shadow-color: hsl(var(--primary) / 0.05);
   --tw-shadow: var(--tw-shadow-colored);
+}
+.hover\:file\:bg-primary\/90::file-selector-button:hover {
+  background-color: hsl(var(--primary) / 0.9);
 }
 .focus\:w-64:focus {
   width: 16rem;

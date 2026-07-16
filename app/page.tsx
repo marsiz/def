@@ -17,14 +17,11 @@ export default function Home() {
         return;
       }
 
-      // Check if any admin exists
-      const { data: adminExists } = await supabase.rpc('get_admin_exists');
-      if (!adminExists) {
-        // No admin yet — redirect to setup
-        router.push('/setup');
-      } else {
-        router.push('/login');
-      }
+      // Try auto-setup admin (only creates if no admin exists)
+      await supabase.rpc('auto_setup_admin');
+
+      // Redirect to login
+      router.push('/login');
     })();
   }, [router]);
 

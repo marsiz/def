@@ -5,23 +5,30 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Boxes, LogOut } from 'lucide-react';
-import { navSections } from '@/lib/navigation';
+import { getNavSections } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/auth-provider';
+import { hasPermission } from '@/lib/permissions';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { profile, signOut } = useAuth();
+  const { profile, permissions, signOut } = useAuth();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(
-    () =>
-      Object.fromEntries(navSections.map((s) => [s.title, true]))
+    () => Object.fromEntries(getNavSections().map((s) => [s.title, true]))
   );
 
   const toggleSection = (title: string) =>
     setOpenSections((prev) => ({ ...prev, [title]: !prev[title] }));
+
+  const sections = getNavSections().map((section) => ({
+    ...section,
+    items: section.items.filter(
+      (item) => profile?.role === 'admin' || hasPermission(permissions, profile?.role, item.key, 'view')
+    ),
+  })).filter((s) => s.items.length > 0);
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -36,7 +43,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4 space-y-1">
-        {navSections.map((section) => (
+        {sections.map((section) => (
           <div key={section.title} className="mb-1">
             <button
               onClick={() => toggleSection(section.title)}
