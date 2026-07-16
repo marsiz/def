@@ -1,15 +1,13 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { InstallmentsClient } from '@/components/installments/installments-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { CalendarClock } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function InstallmentsPage() {
-  return (
-    <ModulePlaceholder
-      title="Installments"
-      description="Manage installment plans and payment schedules"
-      icon={CalendarClock}
-      features={['Create Installment Plan', 'Payment Schedule', 'Installment Tracking', 'Late Payment Alerts', 'Customer Balance']}
-    />
-  );
+export default async function InstallmentsPage() {
+  const [{ data: installments }, { data: customers }] = await Promise.all([
+    supabase.from('installments').select('*,customer:customers(*)').order('created_at', { ascending: false }),
+    supabase.from('customers').select('*').order('name'),
+  ]);
+
+  return <InstallmentsClient initialInstallments={installments || []} customers={customers || []} />;
 }

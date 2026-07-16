@@ -1,15 +1,13 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { PosClient } from '@/components/pos/pos-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { ClipboardList } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function POSPage() {
-  return (
-    <ModulePlaceholder
-      title="POS Screen"
-      description="Point of sale interface for fast checkout"
-      icon={ClipboardList}
-      features={['Quick Product Search', 'Barcode Scan', 'Cart Management', 'Payment Processing', 'Receipt Printing', 'Cash Drawer']}
-    />
-  );
+export default async function PosPage() {
+  const [{ data: products }, { data: customers }] = await Promise.all([
+    supabase.from('products').select('*').order('name'),
+    supabase.from('customers').select('*').order('name'),
+  ]);
+
+  return <PosClient products={products || []} customers={customers || []} />;
 }

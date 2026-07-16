@@ -1,15 +1,20 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { QuotesClient } from '@/components/quotes/quotes-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { FileText } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function QuotesPage() {
+export default async function QuotesPage() {
+  const [{ data: quotes }, { data: customers }, { data: products }] = await Promise.all([
+    supabase.from('quotes').select('*,customer:customers(*)').order('created_at', { ascending: false }),
+    supabase.from('customers').select('*').order('name'),
+    supabase.from('products').select('*').order('name'),
+  ]);
+
   return (
-    <ModulePlaceholder
-      title="Quotes"
-      description="Create and manage sales quotes for customers"
-      icon={FileText}
-      features={['Create Quote', 'Convert to Invoice', 'Quote Templates', 'Expiration Tracking', 'Customer Approval']}
+    <QuotesClient
+      initialQuotes={quotes || []}
+      customers={customers || []}
+      products={products || []}
     />
   );
 }

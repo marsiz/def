@@ -59,26 +59,26 @@ export function DashboardClient({ stats }: { stats: DashboardStats }) {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col gap-1"
       >
-        <h2 className="text-2xl font-bold tracking-tight">Welcome back, Admin</h2>
-        <p className="text-sm text-muted-foreground">Here&apos;s what&apos;s happening with your business today.</p>
+        <h2 className="text-2xl font-bold tracking-tight">Tekrar hoş geldiniz, Yönetici</h2>
+        <p className="text-sm text-muted-foreground">İşletmenizde bugün neler olduğunu görün.</p>
       </motion.div>
 
-      {/* Stat cards */}
+      {/* İstatistik kartları */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Today's Sales" value={formatCurrency(stats.todaySales)} change="+12.5%" trend="up" icon={<DollarSign className="h-5 w-5" />} delay={0} />
-        <StatCard title="Monthly Sales" value={formatCurrency(stats.monthlySales)} change="+8.2%" trend="up" icon={<TrendingUp className="h-5 w-5" />} delay={0.05} />
-        <StatCard title="Expenses" value={formatCurrency(stats.expenses)} change="-3.1%" trend="down" icon={<TrendingDown className="h-5 w-5" />} delay={0.1} />
-        <StatCard title="Profit" value={formatCurrency(stats.profit)} change="+15.7%" trend="up" icon={<Wallet className="h-5 w-5" />} delay={0.15} />
+        <StatCard title="Bugünkü Satışlar" value={formatCurrency(stats.todaySales)} change="+12.5%" trend="up" icon={<DollarSign className="h-5 w-5" />} delay={0} />
+        <StatCard title="Aylık Satışlar" value={formatCurrency(stats.monthlySales)} change="+8.2%" trend="up" icon={<TrendingUp className="h-5 w-5" />} delay={0.05} />
+        <StatCard title="Giderler" value={formatCurrency(stats.expenses)} change="-3.1%" trend="down" icon={<TrendingDown className="h-5 w-5" />} delay={0.1} />
+        <StatCard title="Kâr" value={formatCurrency(stats.profit)} change="+15.7%" trend="up" icon={<Wallet className="h-5 w-5" />} delay={0.15} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Outstanding Payments" value={formatCurrency(stats.outstandingPayments)} icon={<AlertCircle className="h-5 w-5" />} delay={0.2} />
-        <StatCard title="Customers" value={stats.customerCount.toString()} change="+4" trend="up" icon={<Users className="h-5 w-5" />} delay={0.25} />
-        <StatCard title="Stock Value" value={formatCompactCurrency(stats.stockValue)} icon={<Package className="h-5 w-5" />} delay={0.3} />
-        <StatCard title="Low Stock Items" value={stats.topProducts.length > 0 ? '3' : '0'} change="Action needed" trend="down" icon={<AlertCircle className="h-5 w-5" />} delay={0.35} />
+        <StatCard title="Bekleyen Ödemeler" value={formatCurrency(stats.outstandingPayments)} icon={<AlertCircle className="h-5 w-5" />} delay={0.2} />
+        <StatCard title="Müşteri Sayısı" value={stats.customerCount.toString()} change="+4" trend="up" icon={<Users className="h-5 w-5" />} delay={0.25} />
+        <StatCard title="Stok Değeri" value={formatCompactCurrency(stats.stockValue)} icon={<Package className="h-5 w-5" />} delay={0.3} />
+        <StatCard title="Düşük Stok" value="3" change="İşlem gerekli" trend="down" icon={<AlertCircle className="h-5 w-5" />} delay={0.35} />
       </div>
 
-      {/* Charts */}
+      {/* Grafikler */}
       <div className="grid gap-4 lg:grid-cols-3">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -89,8 +89,8 @@ export function DashboardClient({ stats }: { stats: DashboardStats }) {
           <Card className="glass h-full">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-base">Revenue Overview</CardTitle>
-                <p className="text-sm text-muted-foreground">Revenue, expenses & profit (last 30 days)</p>
+                <CardTitle className="text-base">Gelir Özeti</CardTitle>
+                <p className="text-sm text-muted-foreground">Gelir, gider ve kâr (son 30 gün)</p>
               </div>
             </CardHeader>
             <CardContent>
@@ -118,9 +118,9 @@ export function DashboardClient({ stats }: { stats: DashboardStats }) {
                     formatter={(value: number) => formatCurrency(value)}
                   />
                   <Legend wrapperStyle={{ fontSize: '0.875rem' }} />
-                  <Area type="monotone" dataKey="revenue" stroke="hsl(var(--chart-1))" fill="url(#colorRevenue)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="expenses" stroke="hsl(var(--chart-5))" fill="url(#colorExpenses)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="profit" stroke="hsl(var(--chart-2))" fill="url(#colorProfit)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="revenue" name="Gelir" stroke="hsl(var(--chart-1))" fill="url(#colorRevenue)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="expenses" name="Gider" stroke="hsl(var(--chart-5))" fill="url(#colorExpenses)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="profit" name="Kâr" stroke="hsl(var(--chart-2))" fill="url(#colorProfit)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </CardContent>
@@ -134,8 +134,8 @@ export function DashboardClient({ stats }: { stats: DashboardStats }) {
         >
           <Card className="glass h-full">
             <CardHeader>
-              <CardTitle className="text-base">Sales by Category</CardTitle>
-              <p className="text-sm text-muted-foreground">Distribution this month</p>
+              <CardTitle className="text-base">Kategoriye Göre Satış</CardTitle>
+              <p className="text-sm text-muted-foreground">Bu ayki dağılım</p>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -166,7 +166,7 @@ export function DashboardClient({ stats }: { stats: DashboardStats }) {
         </motion.div>
       </div>
 
-      {/* Cash Flow + Top Products */}
+      {/* Nakit Akışı + En Çok Satanlar */}
       <div className="grid gap-4 lg:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -175,8 +175,8 @@ export function DashboardClient({ stats }: { stats: DashboardStats }) {
         >
           <Card className="glass h-full">
             <CardHeader>
-              <CardTitle className="text-base">Cash Flow</CardTitle>
-              <p className="text-sm text-muted-foreground">Inflow vs Outflow</p>
+              <CardTitle className="text-base">Nakit Akışı</CardTitle>
+              <p className="text-sm text-muted-foreground">Giriş ve çıkış</p>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={260}>
@@ -189,8 +189,8 @@ export function DashboardClient({ stats }: { stats: DashboardStats }) {
                     formatter={(value: number) => formatCurrency(value)}
                   />
                   <Legend wrapperStyle={{ fontSize: '0.875rem' }} />
-                  <Bar dataKey="inflow" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="outflow" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="inflow" name="Giriş" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="outflow" name="Çıkış" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -204,8 +204,8 @@ export function DashboardClient({ stats }: { stats: DashboardStats }) {
         >
           <Card className="glass h-full">
             <CardHeader>
-              <CardTitle className="text-base">Top Selling Products</CardTitle>
-              <p className="text-sm text-muted-foreground">By quantity sold this month</p>
+              <CardTitle className="text-base">En Çok Satan Ürünler</CardTitle>
+              <p className="text-sm text-muted-foreground">Bu ay satış adedine göre</p>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={260}>
@@ -216,7 +216,7 @@ export function DashboardClient({ stats }: { stats: DashboardStats }) {
                   <Tooltip
                     contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '0.75rem', fontSize: '0.875rem' }}
                   />
-                  <Bar dataKey="quantity" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="quantity" name="Adet" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -224,7 +224,7 @@ export function DashboardClient({ stats }: { stats: DashboardStats }) {
         </motion.div>
       </div>
 
-      {/* Latest Orders */}
+      {/* Son Siparişler */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -232,29 +232,29 @@ export function DashboardClient({ stats }: { stats: DashboardStats }) {
       >
         <Card className="glass">
           <CardHeader>
-            <CardTitle className="text-base">Latest Orders</CardTitle>
-            <p className="text-sm text-muted-foreground">Recent sales transactions</p>
+            <CardTitle className="text-base">Son Siparişler</CardTitle>
+            <p className="text-sm text-muted-foreground">Son satış işlemleri</p>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Invoice</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Fatura</TableHead>
+                  <TableHead>Müşteri</TableHead>
+                  <TableHead>Tarih</TableHead>
+                  <TableHead>Durum</TableHead>
+                  <TableHead className="text-right">Tutar</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {stats.latestOrders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.invoice_number}</TableCell>
-                    <TableCell>{order.customer?.name || 'Walk-in Customer'}</TableCell>
+                    <TableCell>{order.customer?.name || 'Yoldaki Müşteri'}</TableCell>
                     <TableCell className="text-muted-foreground">{timeAgo(order.sale_date)}</TableCell>
                     <TableCell>
                       <Badge variant={order.status === 'paid' ? 'default' : 'destructive'}>
-                        {order.status}
+                        {order.status === 'paid' ? 'Ödendi' : 'Bekliyor'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-medium">{formatCurrency(Number(order.total_amount))}</TableCell>

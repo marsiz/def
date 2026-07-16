@@ -1,15 +1,13 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { BarcodeClient } from '@/components/barcode/barcode-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { ScanBarcode } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function BarcodePage() {
-  return (
-    <ModulePlaceholder
-      title="Barcode Scanner"
-      description="Scan and manage product barcodes for quick lookup"
-      icon={ScanBarcode}
-      features={['Live Camera Scan', 'Manual Barcode Entry', 'Product Lookup', 'Stock Adjustment', 'Generate Barcodes', 'Print Barcodes']}
-    />
-  );
+export default async function BarcodePage() {
+  const { data: products } = await supabase
+    .from('products')
+    .select('*,category:categories(*),brand:brands(*)')
+    .order('created_at', { ascending: false });
+
+  return <BarcodeClient initialProducts={products || []} />;
 }

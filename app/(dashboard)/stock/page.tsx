@@ -1,15 +1,13 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { StockClient } from '@/components/stock/stock-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { Warehouse } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function StockPage() {
-  return (
-    <ModulePlaceholder
-      title="Stock Management"
-      description="Track stock entries, exits, and warehouse operations"
-      icon={Warehouse}
-      features={['Stock Entry', 'Stock Exit', 'Warehouse Management', 'Serial Number Tracking', 'IMEI Tracking', 'Minimum Stock Warning', 'Bulk Import (Excel)', 'Bulk Export (Excel)']}
-    />
-  );
+export default async function StockPage() {
+  const { data: products } = await supabase
+    .from('products')
+    .select('*,category:categories(*),brand:brands(*),supplier:suppliers(*)')
+    .order('created_at', { ascending: false });
+
+  return <StockClient initialProducts={products || []} />;
 }

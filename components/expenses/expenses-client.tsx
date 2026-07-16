@@ -21,7 +21,7 @@ import { supabase } from '@/lib/supabase';
 import { formatCurrency, formatDate } from '@/lib/format';
 import type { Expense } from '@/lib/types';
 
-const EXPENSE_CATEGORIES = ['Rent', 'Utilities', 'Salaries', 'Inventory', 'Marketing', 'Equipment', 'Miscellaneous', 'Transport', 'Insurance', 'Taxes'];
+const EXPENSE_CATEGORIES = ['Kira', 'Faturalar', 'Maaşlar', 'Stok', 'Pazarlama', 'Ekipman', 'Diğer', 'Ulaşım', 'Sigorta', 'Vergiler'];
 
 interface ExpenseForm {
   id?: string;
@@ -95,9 +95,9 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Expense Management"
-        description="Track and manage business expenses"
-        actionLabel="Add Expense"
+        title="Gider Yönetimi"
+        description="İşletme giderlerini takip edin ve yönetin"
+        actionLabel="Gider Ekle"
         actionIcon={<Plus className="h-4 w-4" />}
         onAction={openCreate}
       />
@@ -110,7 +110,7 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
                 <TrendingDown className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Expenses</p>
+                <p className="text-sm text-muted-foreground">Toplam Giderler</p>
                 <p className="text-xl font-bold">{formatCurrency(totalAmount)}</p>
               </div>
             </div>
@@ -118,13 +118,13 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
         </Card>
         <Card className="glass">
           <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">This Month</p>
+            <p className="text-sm text-muted-foreground">Bu Ay</p>
             <p className="text-xl font-bold">{formatCurrency(expenses.filter(e => new Date(e.expense_date).getMonth() === new Date().getMonth()).reduce((s, e) => s + Number(e.amount), 0))}</p>
           </CardContent>
         </Card>
         <Card className="glass">
           <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">Categories</p>
+            <p className="text-sm text-muted-foreground">Kategoriler</p>
             <p className="text-xl font-bold">{new Set(expenses.map(e => e.category)).size}</p>
           </CardContent>
         </Card>
@@ -133,12 +133,12 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search expenses..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Giderlerde ara..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="all">Tüm Kategoriler</SelectItem>
             {EXPENSE_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -149,20 +149,20 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
           {filtered.length === 0 ? (
             <EmptyState
               icon={<CreditCard className="h-8 w-8" />}
-              title="No expenses found"
-              description={search ? "Try adjusting your search" : "Add your first expense record"}
-              action={!search && <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />Add Expense</Button>}
+              title="Gider bulunamadı"
+              description={search ? "Aramanızı değiştirmeyi deneyin" : "İlk gider kaydınızı ekleyin"}
+              action={!search && <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />Gider Ekle</Button>}
             />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Payment</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead>Açıklama</TableHead>
+                  <TableHead>Tarih</TableHead>
+                  <TableHead>Ödeme</TableHead>
+                  <TableHead className="text-right">Tutar</TableHead>
+                  <TableHead className="text-right">İşlemler</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -172,7 +172,9 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
                       <TableCell><Badge variant="secondary">{e.category}</Badge></TableCell>
                       <TableCell className="text-muted-foreground">{e.description || '—'}</TableCell>
                       <TableCell className="text-muted-foreground">{formatDate(e.expense_date)}</TableCell>
-                      <TableCell className="capitalize text-muted-foreground">{e.payment_method}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {e.payment_method === 'cash' ? 'Nakit' : e.payment_method === 'card' ? 'Kart' : 'Havale'}
+                      </TableCell>
                       <TableCell className="text-right font-semibold text-destructive">-{formatCurrency(Number(e.amount))}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(e.id)}>
@@ -191,54 +193,54 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editing.id ? 'Edit Expense' : 'New Expense'}</DialogTitle>
+            <DialogTitle>{editing.id ? 'Gider Düzenle' : 'Yeni Gider'}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Category *</Label>
+                <Label>Kategori *</Label>
                 <Select value={editing.category} onValueChange={(v) => setEditing({ ...editing, category: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Seç" /></SelectTrigger>
                   <SelectContent>
                     {EXPENSE_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Amount ($) *</Label>
+                <Label>Tutar (₺) *</Label>
                 <Input type="number" step="0.01" value={editing.amount} onChange={(e) => setEditing({ ...editing, amount: e.target.value })} />
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Date</Label>
+                <Label>Tarih</Label>
                 <Input type="date" value={editing.expense_date} onChange={(e) => setEditing({ ...editing, expense_date: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Payment Method</Label>
+                <Label>Ödeme Yöntemi</Label>
                 <Select value={editing.payment_method} onValueChange={(v) => setEditing({ ...editing, payment_method: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="card">Card</SelectItem>
-                    <SelectItem value="bank">Bank Transfer</SelectItem>
+                    <SelectItem value="cash">Nakit</SelectItem>
+                    <SelectItem value="card">Kart</SelectItem>
+                    <SelectItem value="bank">Havale/EFT</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} rows={2} placeholder="Expense description" />
+              <Label>Açıklama</Label>
+              <Textarea value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} rows={2} placeholder="Gider açıklaması" />
             </div>
             <div className="space-y-2">
-              <Label>Reference</Label>
-              <Input value={editing.reference} onChange={(e) => setEditing({ ...editing, reference: e.target.value })} placeholder="Receipt or reference number" />
+              <Label>Referans</Label>
+              <Input value={editing.reference} onChange={(e) => setEditing({ ...editing, reference: e.target.value })} placeholder="Makbuz veya referans numarası" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>İptal</Button>
             <Button onClick={handleSave} disabled={saving || !editing.category}>
-              {saving ? 'Saving...' : editing.id ? 'Update' : 'Create'}
+              {saving ? 'Kaydediliyor...' : editing.id ? 'Güncelle' : 'Oluştur'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -247,10 +249,10 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
       <ConfirmDialog
         open={open}
         onOpenChange={setOpen}
-        title="Delete Expense"
-        description="Are you sure you want to delete this expense record?"
+        title="Gideri Sil"
+        description="Bu gider kaydını silmek istediğinizden emin misiniz?"
         onConfirm={handleConfirm}
-        confirmLabel="Delete"
+        confirmLabel="Sil"
       />
     </div>
   );

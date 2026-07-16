@@ -33,7 +33,7 @@ export function ModulePlaceholder({ title, description, icon: Icon, features }: 
           <CardContent className="p-6">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
               <Construction className="h-4 w-4" />
-              <span>This module is fully designed and ready for implementation</span>
+              <span>Bu modül tamamen tasarlandı ve uygulanmaya hazır</span>
             </div>
             {features && features.length > 0 && (
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -52,8 +52,8 @@ export function ModulePlaceholder({ title, description, icon: Icon, features }: 
               </div>
             )}
             <div className="mt-6 flex gap-3">
-              <Button variant="outline">View Documentation</Button>
-              <Button>Configure Module</Button>
+              <Button variant="outline">Dokümantasyonu Görüntüle</Button>
+              <Button>Modülü Yapılandır</Button>
             </div>
           </CardContent>
         </Card>

@@ -6,13 +6,13 @@ import { ThemeProvider } from '@/components/theme-provider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Marsiz ERP — Enterprise Resource Planning',
-  description: 'Complete ERP and accounting system for modern businesses',
+  title: 'Marsiz ERP — Kurumsal Kaynak Planlama',
+  description: 'Modern işletmeler için kapsamlı ERP ve muhasebe sistemi',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="tr" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>

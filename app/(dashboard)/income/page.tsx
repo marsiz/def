@@ -1,15 +1,9 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { IncomeClient } from '@/components/income/income-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { Banknote } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function IncomePage() {
-  return (
-    <ModulePlaceholder
-      title="Income Management"
-      description="Track all income sources and revenue streams"
-      icon={Banknote}
-      features={['Record Income', 'Income Categories', 'Recurring Income', 'Income Reports', 'Revenue Forecasting']}
-    />
-  );
+export default async function IncomePage() {
+  const { data } = await supabase.from('incomes').select('*').order('income_date', { ascending: false });
+  return <IncomeClient initialIncomes={data || []} />;
 }

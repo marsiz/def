@@ -115,6 +115,148 @@ export interface Expense {
   deleted_at: string | null;
 }
 
+export interface StockMovement {
+  id: UUID;
+  product_id: UUID;
+  movement_type: string;
+  quantity: number;
+  reference: string | null;
+  notes: string | null;
+  movement_date: string;
+  created_at: string;
+  deleted_at: string | null;
+  product?: Product | null;
+}
+
+export interface ServiceTicket {
+  id: UUID;
+  ticket_number: string;
+  customer_id: UUID | null;
+  product_name: string;
+  imei: string | null;
+  password: string | null;
+  accessories_received: string | null;
+  issue_description: string;
+  status: string;
+  technician_id: string | null;
+  technician_notes: string | null;
+  customer_signature: string | null;
+  photo_url: string | null;
+  warranty: boolean;
+  estimated_cost: number;
+  final_cost: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  customer?: Customer | null;
+}
+
+export interface BankAccount {
+  id: UUID;
+  bank_name: string;
+  account_name: string;
+  account_number: string | null;
+  iban: string | null;
+  balance: number;
+  currency: string;
+  account_type: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface CashTransaction {
+  id: UUID;
+  transaction_type: string;
+  amount: number;
+  description: string | null;
+  reference: string | null;
+  transaction_date: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface Installment {
+  id: UUID;
+  sale_id: UUID | null;
+  customer_id: UUID | null;
+  total_amount: number;
+  paid_amount: number;
+  installment_count: number;
+  monthly_amount: number;
+  next_payment_date: string | null;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  customer?: Customer | null;
+}
+
+export interface Income {
+  id: UUID;
+  source: string;
+  description: string | null;
+  amount: number;
+  income_date: string;
+  payment_method: string;
+  reference: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface Notification {
+  id: UUID;
+  title: string;
+  message: string | null;
+  type: string;
+  read: boolean;
+  created_at: string;
+}
+
+export interface Company {
+  id: UUID;
+  name: string;
+  tax_id: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  currency: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface ActivityLog {
+  id: UUID;
+  user_name: string | null;
+  action: string;
+  module: string | null;
+  details: string | null;
+  ip_address: string | null;
+  created_at: string;
+}
+
+export interface Quote {
+  id: UUID;
+  quote_number: string;
+  customer_id: UUID | null;
+  subtotal: number;
+  tax_amount: number;
+  discount_amount: number;
+  total_amount: number;
+  status: string;
+  valid_until: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  customer?: Customer | null;
+}
+
 export interface DashboardStats {
   todaySales: number;
   monthlySales: number;

@@ -1,15 +1,14 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { SalesClient } from '@/components/sales/sales-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { Receipt } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function InvoicesPage() {
-  return (
-    <ModulePlaceholder
-      title="Invoices"
-      description="Manage and track all customer invoices"
-      icon={Receipt}
-      features={['Invoice Generation', 'Invoice Templates', 'Payment Status', 'Overdue Tracking', 'PDF Export', 'Email Invoices']}
-    />
-  );
+export default async function InvoicesPage() {
+  const [{ data: sales }, { data: customers }, { data: products }] = await Promise.all([
+    supabase.from('sales').select('*,customer:customers(*)').order('sale_date', { ascending: false }),
+    supabase.from('customers').select('*').order('name'),
+    supabase.from('products').select('*').order('name'),
+  ]);
+
+  return <SalesClient initialSales={sales || []} customers={customers || []} products={products || []} />;
 }

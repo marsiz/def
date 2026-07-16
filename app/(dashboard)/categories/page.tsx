@@ -1,15 +1,9 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { CategoriesClient } from '@/components/categories/categories-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { Tags } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function CategoriesPage() {
-  return (
-    <ModulePlaceholder
-      title="Categories"
-      description="Organize products into categories"
-      icon={Tags}
-      features={['Create Category', 'Edit Category', 'Delete Category', 'Product Count', 'Category Tree View']}
-    />
-  );
+export default async function CategoriesPage() {
+  const { data } = await supabase.from('categories').select('*').order('created_at', { ascending: false });
+  return <CategoriesClient initialCategories={data || []} />;
 }

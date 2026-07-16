@@ -65,7 +65,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     0
   );
 
-  // Top products aggregation
+  // En çok satan ürünler
   const productMap = new Map<string, { quantity: number; revenue: number }>();
   (topProductsData || []).forEach((item) => {
     const existing = productMap.get(item.product_name) || { quantity: 0, revenue: 0 };
@@ -78,7 +78,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     .sort((a, b) => b.quantity - a.quantity)
     .slice(0, 5);
 
-  // Revenue vs expenses vs profit by day
+  // Gelir / Gider / Kar günlük
   const dateMap = new Map<string, { revenue: number; expenses: number }>();
   (revenueRaw || []).forEach((r) => {
     const day = new Date(r.sale_date).toISOString().slice(0, 10);
@@ -95,16 +95,16 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const revenueData = Array.from(dateMap.entries())
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([date, v]) => ({
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      date: new Date(date).toLocaleDateString('tr-TR', { month: 'short', day: 'numeric' }),
       revenue: Math.round(v.revenue),
       expenses: Math.round(v.expenses),
       profit: Math.round(v.revenue - v.expenses),
     }));
 
-  // Sales by category
+  // Kategoriye göre satış
   const catMap = new Map<string, number>();
   (categorySales || []).forEach((r) => {
-    const catName = (r as any)?.product?.category?.name || 'Uncategorized';
+    const catName = (r as any)?.product?.category?.name || 'Kategorisiz';
     catMap.set(catName, (catMap.get(catName) || 0) + Number((r as any).subtotal));
   });
   const salesByCategory = Array.from(catMap.entries()).map(([name, value]) => ({
@@ -112,7 +112,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     value: Math.round(value),
   }));
 
-  // Cash flow
+  // Nakit akışı
   const cashFlowData = revenueData.map((d) => ({
     date: d.date,
     inflow: d.revenue,

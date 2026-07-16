@@ -1,15 +1,9 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { BankAccountsClient } from '@/components/bank-accounts/bank-accounts-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { Landmark } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function BankAccountsPage() {
-  return (
-    <ModulePlaceholder
-      title="Bank Accounts"
-      description="Manage bank accounts and transfers"
-      icon={Landmark}
-      features={['Account Management', 'Transfers', 'Reconciliation', 'Transaction History', 'Balance Tracking']}
-    />
-  );
+export default async function BankAccountsPage() {
+  const { data } = await supabase.from('bank_accounts').select('*').order('created_at', { ascending: false });
+  return <BankAccountsClient initialAccounts={data || []} />;
 }

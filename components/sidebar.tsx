@@ -26,7 +26,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </div>
         <div className="flex flex-col">
           <span className="text-sm font-bold tracking-tight">Marsiz ERP</span>
-          <span className="text-[10px] text-muted-foreground">Enterprise Suite</span>
+          <span className="text-[10px] text-muted-foreground">Kurumsal Çözüm</span>
         </div>
       </div>
 
@@ -93,10 +93,10 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="border-t border-border/50 p-4">
         <div className="flex items-center gap-3 rounded-lg bg-muted/30 p-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-bold text-white">
-            AD
+            YN
           </div>
           <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-medium">Admin User</p>
+            <p className="truncate text-sm font-medium">Yönetici Kullanıcı</p>
             <p className="truncate text-xs text-muted-foreground">admin@marsiz.com</p>
           </div>
         </div>

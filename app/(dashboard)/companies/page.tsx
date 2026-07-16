@@ -1,15 +1,9 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { CompaniesClient } from '@/components/companies/companies-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { Building2 } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function CompaniesPage() {
-  return (
-    <ModulePlaceholder
-      title="Multi Company"
-      description="Manage multiple companies within a single system"
-      icon={Building2}
-      features={['Company Switcher', 'Company Settings', 'Data Isolation', 'Shared Resources', 'Consolidated Reports']}
-    />
-  );
+export default async function CompaniesPage() {
+  const { data } = await supabase.from('companies').select('*').order('created_at', { ascending: false });
+  return <CompaniesClient initialCompanies={data || []} />;
 }

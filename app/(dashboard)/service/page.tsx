@@ -1,15 +1,20 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { ServiceClient } from '@/components/service/service-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { Wrench } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function ServicePage() {
+export default async function ServicePage() {
+  const [{ data: tickets }, { data: customers }] = await Promise.all([
+    supabase.from('service_tickets').select('*,customer:customers(*)').order('created_at', { ascending: false }),
+    supabase.from('customers').select('*').order('name'),
+  ]);
+
   return (
-    <ModulePlaceholder
-      title="Service Tracking"
-      description="Open and track service tickets for customer devices"
-      icon={Wrench}
-      features={['Open Service Ticket', 'Repair Status', 'Technician Assignment', 'Waiting Parts', 'Customer Signature', 'Photo Upload', 'IMEI Tracking', 'Password Tracking', 'Accessories Received']}
+    <ServiceClient
+      initialTickets={tickets || []}
+      customers={customers || []}
+      title="Servis Takibi"
+      description="Müşteri cihazları için servis ticketleri açın ve takip edin"
     />
   );
 }

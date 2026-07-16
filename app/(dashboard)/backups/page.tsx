@@ -1,15 +1,7 @@
-"use client";
+import { BackupsClient } from '@/components/backups/backups-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { DatabaseBackup } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
 export default function BackupsPage() {
-  return (
-    <ModulePlaceholder
-      title="Backups"
-      description="Database backup and restore management"
-      icon={DatabaseBackup}
-      features={['Manual Backup', 'Scheduled Backups', 'Restore from Backup', 'Download Backup', 'Backup History']}
-    />
-  );
+  return <BackupsClient />;
 }

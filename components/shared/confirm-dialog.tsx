@@ -28,7 +28,7 @@ export function ConfirmDialog({
   title,
   description,
   onConfirm,
-  confirmLabel = 'Confirm',
+  confirmLabel = 'Onayla',
   destructive = true,
 }: ConfirmDialogProps) {
   return (
@@ -39,7 +39,7 @@ export function ConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>İptal</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             className={destructive ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}

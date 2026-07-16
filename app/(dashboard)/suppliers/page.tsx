@@ -1,15 +1,9 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { SuppliersClient } from '@/components/suppliers/suppliers-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { Truck } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function SuppliersPage() {
-  return (
-    <ModulePlaceholder
-      title="Suppliers"
-      description="Manage supplier relationships and purchase orders"
-      icon={Truck}
-      features={['Supplier Directory', 'Contact Management', 'Purchase History', 'Supplier Payments', 'Supplier Ratings']}
-    />
-  );
+export default async function SuppliersPage() {
+  const { data } = await supabase.from('suppliers').select('*').order('created_at', { ascending: false });
+  return <SuppliersClient initialSuppliers={data || []} />;
 }

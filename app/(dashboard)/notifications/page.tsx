@@ -1,15 +1,9 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { NotificationsClient } from '@/components/notifications/notifications-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { Bell } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function NotificationsPage() {
-  return (
-    <ModulePlaceholder
-      title="Notifications"
-      description="View and manage all system notifications"
-      icon={Bell}
-      features={['Real-time Alerts', 'Low Stock Warnings', 'Payment Reminders', 'Activity Notifications', 'Notification Preferences']}
-    />
-  );
+export default async function NotificationsPage() {
+  const { data } = await supabase.from('notifications').select('*').order('created_at', { ascending: false });
+  return <NotificationsClient initialNotifications={data || []} />;
 }

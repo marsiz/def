@@ -43,7 +43,6 @@ export function SalesClient({ initialSales, customers, products }: SalesClientPr
   const [viewSale, setViewSale] = useState<(Sale & { customer?: Customer | null; sale_items?: SaleItem[] }) | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Create form state
   const [customerId, setCustomerId] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState('');
@@ -136,10 +135,7 @@ export function SalesClient({ initialSales, customers, products }: SalesClientPr
       }));
       await supabase.from('sale_items').insert(itemPayload);
 
-      // Decrement stock
       for (const item of cart) {
-        await supabase.rpc('decrement_stock', { product_id: item.product_id, qty: item.quantity }).then(() => {});
-        // Fallback: direct update if RPC doesn't exist
         const product = products.find((p) => p.id === item.product_id);
         if (product) {
           await supabase.from('products').update({ stock_quantity: Math.max(product.stock_quantity - item.quantity, 0) }).eq('id', item.product_id);
@@ -167,9 +163,9 @@ export function SalesClient({ initialSales, customers, products }: SalesClientPr
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Sales & Invoices"
-        description="Create sales invoices and track transactions"
-        actionLabel="New Sale"
+        title="Satışlar ve Faturalar"
+        description="Satış faturaları oluşturun ve işlemleri takip edin"
+        actionLabel="Yeni Satış"
         actionIcon={<Plus className="h-4 w-4" />}
         onAction={() => { resetForm(); setCreateOpen(true); }}
       />
@@ -178,7 +174,7 @@ export function SalesClient({ initialSales, customers, products }: SalesClientPr
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search by invoice number or customer..."
+            placeholder="Fatura numarası veya müşteriye göre ara..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -187,9 +183,9 @@ export function SalesClient({ initialSales, customers, products }: SalesClientPr
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="paid">Paid</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="all">Tüm Durumlar</SelectItem>
+            <SelectItem value="paid">Ödendi</SelectItem>
+            <SelectItem value="pending">Bekliyor</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -199,21 +195,21 @@ export function SalesClient({ initialSales, customers, products }: SalesClientPr
           {filtered.length === 0 ? (
             <EmptyState
               icon={<Receipt className="h-8 w-8" />}
-              title="No sales found"
-              description={search ? "Try adjusting your search" : "Create your first sale invoice"}
-              action={!search && <Button onClick={() => setCreateOpen(true)} className="gap-2"><Plus className="h-4 w-4" />New Sale</Button>}
+              title="Satış bulunamadı"
+              description={search ? "Aramanızı değiştirmeyi deneyin" : "İlk satış faturanızı oluşturun"}
+              action={!search && <Button onClick={() => setCreateOpen(true)} className="gap-2"><Plus className="h-4 w-4" />Yeni Satış</Button>}
             />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Payment</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Fatura No</TableHead>
+                  <TableHead>Müşteri</TableHead>
+                  <TableHead>Tarih</TableHead>
+                  <TableHead>Ödeme</TableHead>
+                  <TableHead>Durum</TableHead>
+                  <TableHead className="text-right">Toplam</TableHead>
+                  <TableHead className="text-right">İşlemler</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -230,11 +226,15 @@ export function SalesClient({ initialSales, customers, products }: SalesClientPr
                       onClick={() => viewSaleDetails(s)}
                     >
                       <TableCell className="font-medium">{s.invoice_number}</TableCell>
-                      <TableCell>{s.customer?.name || 'Walk-in Customer'}</TableCell>
+                      <TableCell>{s.customer?.name || 'Yoldaki Müşteri'}</TableCell>
                       <TableCell className="text-muted-foreground">{formatDate(s.sale_date)}</TableCell>
-                      <TableCell className="capitalize text-muted-foreground">{s.payment_method}</TableCell>
+                      <TableCell className="capitalize text-muted-foreground">
+                        {s.payment_method === 'cash' ? 'Nakit' : s.payment_method === 'card' ? 'Kart' : s.payment_method === 'bank' ? 'Havale' : 'Taksit'}
+                      </TableCell>
                       <TableCell>
-                        <Badge variant={s.status === 'paid' ? 'default' : 'destructive'}>{s.status}</Badge>
+                        <Badge variant={s.status === 'paid' ? 'default' : 'destructive'}>
+                          {s.status === 'paid' ? 'Ödendi' : 'Bekliyor'}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right font-semibold">{formatCurrency(Number(s.total_amount))}</TableCell>
                       <TableCell className="text-right">
@@ -251,46 +251,45 @@ export function SalesClient({ initialSales, customers, products }: SalesClientPr
         </CardContent>
       </Card>
 
-      {/* Create Sale Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
-            <DialogTitle>New Sale Invoice</DialogTitle>
-            <DialogDescription>Create a new sales transaction</DialogDescription>
+            <DialogTitle>Yeni Satış Faturası</DialogTitle>
+            <DialogDescription>Yeni bir satış işlemi oluşturun</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Customer</Label>
+                <Label>Müşteri</Label>
                 <Select value={customerId} onValueChange={setCustomerId}>
-                  <SelectTrigger><SelectValue placeholder="Walk-in Customer" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Yoldaki Müşteri" /></SelectTrigger>
                   <SelectContent>
                     {customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Payment Method</Label>
+                <Label>Ödeme Yöntemi</Label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="card">Card</SelectItem>
-                    <SelectItem value="bank">Bank Transfer</SelectItem>
-                    <SelectItem value="installment">Installment</SelectItem>
+                    <SelectItem value="cash">Nakit</SelectItem>
+                    <SelectItem value="card">Kredi Kartı</SelectItem>
+                    <SelectItem value="bank">Havale/EFT</SelectItem>
+                    <SelectItem value="installment">Taksit</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="rounded-lg border border-border p-4 space-y-3">
-              <Label className="text-sm font-semibold">Add Products</Label>
+              <Label className="text-sm font-semibold">Ürün Ekle</Label>
               <div className="flex gap-2">
                 <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                  <SelectTrigger className="flex-1"><SelectValue placeholder="Select product" /></SelectTrigger>
+                  <SelectTrigger className="flex-1"><SelectValue placeholder="Ürün seç" /></SelectTrigger>
                   <SelectContent>
-                    {products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} — {formatCurrency(p.sale_price)} ({p.stock_quantity} in stock)</SelectItem>)}
+                    {products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} — {formatCurrency(p.sale_price)} ({p.stock_quantity} stokta)</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Input type="number" min="1" value={productQty} onChange={(e) => setProductQty(e.target.value)} className="w-20" />
@@ -319,38 +318,37 @@ export function SalesClient({ initialSales, customers, products }: SalesClientPr
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Discount ($)</Label>
+                <Label>İndirim (₺)</Label>
                 <Input type="number" step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Tax Rate (%)</Label>
+                <Label>KDV Oranı (%)</Label>
                 <Input type="number" step="0.01" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} />
               </div>
             </div>
 
             <div className="rounded-lg bg-muted/30 p-4 space-y-2">
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Discount</span><span>-{formatCurrency(discountAmount)}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Tax ({taxRate}%)</span><span>{formatCurrency(taxAmount)}</span></div>
-              <div className="flex justify-between text-base font-bold border-t border-border pt-2"><span>Total</span><span>{formatCurrency(total)}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Ara Toplam</span><span>{formatCurrency(subtotal)}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">İndirim</span><span>-{formatCurrency(discountAmount)}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">KDV ({taxRate}%)</span><span>{formatCurrency(taxAmount)}</span></div>
+              <div className="flex justify-between text-base font-bold border-t border-border pt-2"><span>Toplam</span><span>{formatCurrency(total)}</span></div>
             </div>
 
             <div className="space-y-2">
-              <Label>Notes</Label>
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Optional notes" />
+              <Label>Notlar</Label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="İsteğe bağlı notlar" />
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>İptal</Button>
             <Button onClick={handleCreate} disabled={saving || cart.length === 0}>
-              {saving ? 'Processing...' : 'Complete Sale'}
+              {saving ? 'İşleniyor...' : 'Satışı Tamamla'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* View Sale Dialog */}
       <Dialog open={!!viewSale} onOpenChange={(open) => !open && setViewSale(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
           {viewSale && (
@@ -361,23 +359,27 @@ export function SalesClient({ initialSales, customers, products }: SalesClientPr
                   {viewSale.invoice_number}
                 </DialogTitle>
                 <DialogDescription>
-                  {formatDate(viewSale.sale_date)} • {viewSale.customer?.name || 'Walk-in Customer'}
+                  {formatDate(viewSale.sale_date)} • {viewSale.customer?.name || 'Yoldaki Müşteri'}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 py-2">
                 <div className="flex items-center justify-between">
-                  <Badge variant={viewSale.status === 'paid' ? 'default' : 'destructive'}>{viewSale.status}</Badge>
-                  <span className="text-sm text-muted-foreground capitalize">{viewSale.payment_method}</span>
+                  <Badge variant={viewSale.status === 'paid' ? 'default' : 'destructive'}>
+                    {viewSale.status === 'paid' ? 'Ödendi' : 'Bekliyor'}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {viewSale.payment_method === 'cash' ? 'Nakit' : viewSale.payment_method === 'card' ? 'Kredi Kartı' : viewSale.payment_method === 'bank' ? 'Havale/EFT' : 'Taksit'}
+                  </span>
                 </div>
 
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Product</TableHead>
-                      <TableHead className="text-center">Qty</TableHead>
-                      <TableHead className="text-right">Price</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead>Ürün</TableHead>
+                      <TableHead className="text-center">Adet</TableHead>
+                      <TableHead className="text-right">Fiyat</TableHead>
+                      <TableHead className="text-right">Toplam</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -393,23 +395,23 @@ export function SalesClient({ initialSales, customers, products }: SalesClientPr
                 </Table>
 
                 <div className="rounded-lg bg-muted/30 p-4 space-y-2">
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>{formatCurrency(Number(viewSale.subtotal))}</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Discount</span><span>-{formatCurrency(Number(viewSale.discount_amount))}</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Tax</span><span>{formatCurrency(Number(viewSale.tax_amount))}</span></div>
-                  <div className="flex justify-between text-base font-bold border-t border-border pt-2"><span>Total</span><span>{formatCurrency(Number(viewSale.total_amount))}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Ara Toplam</span><span>{formatCurrency(Number(viewSale.subtotal))}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">İndirim</span><span>-{formatCurrency(Number(viewSale.discount_amount))}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">KDV</span><span>{formatCurrency(Number(viewSale.tax_amount))}</span></div>
+                  <div className="flex justify-between text-base font-bold border-t border-border pt-2"><span>Toplam</span><span>{formatCurrency(Number(viewSale.total_amount))}</span></div>
                 </div>
 
                 {viewSale.notes && (
                   <div className="rounded-lg border border-border p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                    <p className="text-xs text-muted-foreground mb-1">Notlar</p>
                     <p className="text-sm">{viewSale.notes}</p>
                   </div>
                 )}
               </div>
 
               <DialogFooter>
-                <Button variant="outline" className="gap-2"><Printer className="h-4 w-4" />Print</Button>
-                <Button variant="outline" className="gap-2"><Download className="h-4 w-4" />Download</Button>
+                <Button variant="outline" className="gap-2"><Printer className="h-4 w-4" />Yazdır</Button>
+                <Button variant="outline" className="gap-2"><Download className="h-4 w-4" />İndir</Button>
               </DialogFooter>
             </>
           )}

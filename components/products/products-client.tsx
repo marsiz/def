@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Pencil, Trash2, Package, AlertTriangle, Filter } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { ConfirmDialog, useConfirmDialog } from '@/components/shared/confirm-dialog';
-import { EmptyState, TableSkeleton } from '@/components/shared/states';
+import { EmptyState } from '@/components/shared/states';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/format';
 import type { Product, Category, Brand, Supplier } from '@/lib/types';
@@ -29,7 +29,7 @@ interface ProductsClientProps {
   suppliers: Supplier[];
 }
 
-type ProductForm = {
+interface ProductForm {
   id?: string;
   sku: string;
   barcode: string;
@@ -44,7 +44,7 @@ type ProductForm = {
   min_stock_level: string;
   unit: string;
   has_serial_tracking: boolean;
-};
+}
 
 const emptyForm: ProductForm = {
   sku: '',
@@ -58,7 +58,7 @@ const emptyForm: ProductForm = {
   sale_price: '0',
   stock_quantity: '0',
   min_stock_level: '5',
-  unit: 'pcs',
+  unit: 'adet',
   has_serial_tracking: false,
 };
 
@@ -148,9 +148,9 @@ export function ProductsClient({ initialProducts, categories, brands, suppliers 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Products"
-        description="Manage your inventory items, pricing, and stock levels"
-        actionLabel="Add Product"
+        title="Ürünler"
+        description="Stok kalemlerinizi, fiyatlandırmayı ve stok seviyelerini yönetin"
+        actionLabel="Ürün Ekle"
         actionIcon={<Plus className="h-4 w-4" />}
         onAction={openCreate}
       />
@@ -159,7 +159,7 @@ export function ProductsClient({ initialProducts, categories, brands, suppliers 
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search by name, SKU, or barcode..."
+            placeholder="İsim, SKU veya barkoda göre ara..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -171,9 +171,9 @@ export function ProductsClient({ initialProducts, categories, brands, suppliers 
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Stock</SelectItem>
-            <SelectItem value="low">Low Stock</SelectItem>
-            <SelectItem value="out">Out of Stock</SelectItem>
+            <SelectItem value="all">Tüm Stok</SelectItem>
+            <SelectItem value="low">Düşük Stok</SelectItem>
+            <SelectItem value="out">Stok Tükendi</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -183,21 +183,21 @@ export function ProductsClient({ initialProducts, categories, brands, suppliers 
           {filtered.length === 0 ? (
             <EmptyState
               icon={<Package className="h-8 w-8" />}
-              title="No products found"
-              description={search ? "Try adjusting your search or filters" : "Add your first product to get started"}
-              action={!search && <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />Add Product</Button>}
+              title="Ürün bulunamadı"
+              description={search ? "Aramanızı veya filtrelerinizi değiştirmeyi deneyin" : "Başlamak için ilk ürününüzü ekleyin"}
+              action={!search && <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />Ürün Ekle</Button>}
             />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
+                  <TableHead>Ürün</TableHead>
                   <TableHead>SKU</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Cost</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead className="text-center">Stock</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead className="text-right">Maliyet</TableHead>
+                  <TableHead className="text-right">Fiyat</TableHead>
+                  <TableHead className="text-center">Stok</TableHead>
+                  <TableHead className="text-right">İşlemler</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -219,7 +219,7 @@ export function ProductsClient({ initialProducts, categories, brands, suppliers 
                           <div>
                             <p>{p.name}</p>
                             {p.has_serial_tracking && (
-                              <Badge variant="secondary" className="text-[10px]">Serial Tracked</Badge>
+                              <Badge variant="secondary" className="text-[10px]">Seri Takipli</Badge>
                             )}
                           </div>
                         </div>
@@ -230,7 +230,7 @@ export function ProductsClient({ initialProducts, categories, brands, suppliers 
                       <TableCell className="text-right font-medium">{formatCurrency(p.sale_price)}</TableCell>
                       <TableCell className="text-center">
                         {p.stock_quantity === 0 ? (
-                          <Badge variant="destructive">Out</Badge>
+                          <Badge variant="destructive">Tükendi</Badge>
                         ) : p.stock_quantity <= p.min_stock_level ? (
                           <Badge variant="secondary" className="gap-1 bg-warning/20 text-warning">
                             <AlertTriangle className="h-3 w-3" />
@@ -262,13 +262,13 @@ export function ProductsClient({ initialProducts, categories, brands, suppliers 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
-            <DialogTitle>{editing.id ? 'Edit Product' : 'New Product'}</DialogTitle>
+            <DialogTitle>{editing.id ? 'Ürün Düzenle' : 'Yeni Ürün'}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Name *</Label>
-                <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="Product name" />
+                <Label>Ad *</Label>
+                <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="Ürün adı" />
               </div>
               <div className="space-y-2">
                 <Label>SKU *</Label>
@@ -276,32 +276,32 @@ export function ProductsClient({ initialProducts, categories, brands, suppliers 
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} rows={2} placeholder="Product description" />
+              <Label>Açıklama</Label>
+              <Textarea value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} rows={2} placeholder="Ürün açıklaması" />
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
-                <Label>Category</Label>
+                <Label>Kategori</Label>
                 <Select value={editing.category_id} onValueChange={(v) => setEditing({ ...editing, category_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Seç" /></SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Brand</Label>
+                <Label>Marka</Label>
                 <Select value={editing.brand_id} onValueChange={(v) => setEditing({ ...editing, brand_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Seç" /></SelectTrigger>
                   <SelectContent>
                     {brands.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Supplier</Label>
+                <Label>Tedarikçi</Label>
                 <Select value={editing.supplier_id} onValueChange={(v) => setEditing({ ...editing, supplier_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Seç" /></SelectTrigger>
                   <SelectContent>
                     {suppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
@@ -310,40 +310,40 @@ export function ProductsClient({ initialProducts, categories, brands, suppliers 
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Cost Price ($)</Label>
+                <Label>Maliyet Fiyatı (₺)</Label>
                 <Input type="number" step="0.01" value={editing.cost_price} onChange={(e) => setEditing({ ...editing, cost_price: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Sale Price ($)</Label>
+                <Label>Satış Fiyatı (₺)</Label>
                 <Input type="number" step="0.01" value={editing.sale_price} onChange={(e) => setEditing({ ...editing, sale_price: e.target.value })} />
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
-                <Label>Stock Quantity</Label>
+                <Label>Stok Miktarı</Label>
                 <Input type="number" value={editing.stock_quantity} onChange={(e) => setEditing({ ...editing, stock_quantity: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Min Stock Level</Label>
+                <Label>Min. Stok Seviyesi</Label>
                 <Input type="number" value={editing.min_stock_level} onChange={(e) => setEditing({ ...editing, min_stock_level: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Unit</Label>
-                <Input value={editing.unit} onChange={(e) => setEditing({ ...editing, unit: e.target.value })} placeholder="pcs" />
+                <Label>Birim</Label>
+                <Input value={editing.unit} onChange={(e) => setEditing({ ...editing, unit: e.target.value })} placeholder="adet" />
               </div>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-border p-4">
               <div>
-                <Label className="text-sm font-medium">Serial Number / IMEI Tracking</Label>
-                <p className="text-xs text-muted-foreground">Enable for products with unique serial numbers</p>
+                <Label className="text-sm font-medium">Seri Numarası / IMEI Takibi</Label>
+                <p className="text-xs text-muted-foreground">Benzersiz seri numarası olan ürünler için etkinleştir</p>
               </div>
               <Switch checked={editing.has_serial_tracking} onCheckedChange={(v) => setEditing({ ...editing, has_serial_tracking: v })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>İptal</Button>
             <Button onClick={handleSave} disabled={saving || !editing.name}>
-              {saving ? 'Saving...' : editing.id ? 'Update' : 'Create'}
+              {saving ? 'Kaydediliyor...' : editing.id ? 'Güncelle' : 'Oluştur'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -352,10 +352,10 @@ export function ProductsClient({ initialProducts, categories, brands, suppliers 
       <ConfirmDialog
         open={open}
         onOpenChange={setOpen}
-        title="Delete Product"
-        description="Are you sure you want to delete this product? This action can be undone."
+        title="Ürünü Sil"
+        description="Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınabilir."
         onConfirm={handleConfirm}
-        confirmLabel="Delete"
+        confirmLabel="Sil"
       />
     </div>
   );

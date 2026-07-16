@@ -1,15 +1,20 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { ServiceClient } from '@/components/service/service-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { ShieldCheck } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function RepairsPage() {
+export default async function RepairsPage() {
+  const [{ data: tickets }, { data: customers }] = await Promise.all([
+    supabase.from('service_tickets').select('*,customer:customers(*)').order('created_at', { ascending: false }),
+    supabase.from('customers').select('*').order('name'),
+  ]);
+
   return (
-    <ModulePlaceholder
-      title="Repair Tracking"
-      description="Track repair progress from intake to delivery"
-      icon={ShieldCheck}
-      features={['Repair Queue', 'Status: Waiting Parts', 'Status: In Progress', 'Status: Completed', 'Status: Delivered', 'Status: Cancelled', 'Technician Notes', 'Repair History']}
+    <ServiceClient
+      initialTickets={tickets || []}
+      customers={customers || []}
+      title="Tamir Takibi"
+      description="Tamir süreçlerini giriş aşamasından teslimata kadar takip edin"
     />
   );
 }

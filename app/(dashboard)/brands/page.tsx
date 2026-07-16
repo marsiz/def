@@ -1,15 +1,9 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { BrandsClient } from '@/components/brands/brands-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { Award } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function BrandsPage() {
-  return (
-    <ModulePlaceholder
-      title="Brands"
-      description="Manage product brands and manufacturers"
-      icon={Award}
-      features={['Create Brand', 'Edit Brand', 'Delete Brand', 'Product Count', 'Brand Analytics']}
-    />
-  );
+export default async function BrandsPage() {
+  const { data } = await supabase.from('brands').select('*').order('created_at', { ascending: false });
+  return <BrandsClient initialBrands={data || []} />;
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Palette, Bell, Shield, Globe, Database, Building2, Save } from 'lucide-react';
+import { User, Palette, Bell, Shield, Building2, Database, Save } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,51 +25,39 @@ export function SettingsClient() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" description="Manage your account, preferences, and system configuration" />
+      <PageHeader title="Ayarlar" description="Hesabınızı, tercihlerinizi ve sistem yapılandırmasını yönetin" />
 
       <Tabs defaultValue="profile" className="space-y-4">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1">
-          <TabsTrigger value="profile" className="gap-2"><User className="h-4 w-4" />Profile</TabsTrigger>
-          <TabsTrigger value="appearance" className="gap-2"><Palette className="h-4 w-4" />Theme</TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2"><Bell className="h-4 w-4" />Alerts</TabsTrigger>
-          <TabsTrigger value="security" className="gap-2"><Shield className="h-4 w-4" />Security</TabsTrigger>
-          <TabsTrigger value="company" className="gap-2"><Building2 className="h-4 w-4" />Company</TabsTrigger>
-          <TabsTrigger value="system" className="gap-2"><Database className="h-4 w-4" />System</TabsTrigger>
+          <TabsTrigger value="profile" className="gap-2"><User className="h-4 w-4" />Profil</TabsTrigger>
+          <TabsTrigger value="appearance" className="gap-2"><Palette className="h-4 w-4" />Tema</TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2"><Bell className="h-4 w-4" />Bildirimler</TabsTrigger>
+          <TabsTrigger value="security" className="gap-2"><Shield className="h-4 w-4" />Güvenlik</TabsTrigger>
+          <TabsTrigger value="company" className="gap-2"><Building2 className="h-4 w-4" />Şirket</TabsTrigger>
+          <TabsTrigger value="system" className="gap-2"><Database className="h-4 w-4" />Sistem</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="glass max-w-2xl">
               <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>Update your personal information and avatar</CardDescription>
+                <CardTitle>Profil Bilgileri</CardTitle>
+                <CardDescription>Kişisel bilgilerinizi ve avatarınızı güncelleyin</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-20 w-20">
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white text-xl font-bold">AD</AvatarFallback>
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white text-xl font-bold">YK</AvatarFallback>
                   </Avatar>
-                  <Button variant="outline">Change Avatar</Button>
+                  <Button variant="outline">Avatar Değiştir</Button>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Full Name</Label>
-                    <Input defaultValue="Admin User" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input type="email" defaultValue="admin@marsiz.com" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input defaultValue="+1-555-0000" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Role</Label>
-                    <Input defaultValue="Administrator" disabled />
-                  </div>
+                  <div className="space-y-2"><Label>Ad Soyad</Label><Input defaultValue="Yönetici Kullanıcı" /></div>
+                  <div className="space-y-2"><Label>E-posta</Label><Input type="email" defaultValue="admin@marsiz.com" /></div>
+                  <div className="space-y-2"><Label>Telefon</Label><Input defaultValue="+90 555 000 0000" /></div>
+                  <div className="space-y-2"><Label>Rol</Label><Input defaultValue="Yönetici" disabled /></div>
                 </div>
-                <Button className="gap-2"><Save className="h-4 w-4" />Save Changes</Button>
+                <Button className="gap-2"><Save className="h-4 w-4" />Değişiklikleri Kaydet</Button>
               </CardContent>
             </Card>
           </motion.div>
@@ -79,12 +67,12 @@ export function SettingsClient() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="glass max-w-2xl">
               <CardHeader>
-                <CardTitle>Appearance</CardTitle>
-                <CardDescription>Customize the look and feel of your dashboard</CardDescription>
+                <CardTitle>Görünüm</CardTitle>
+                <CardDescription>Gösterge panelinizin görünümünü özelleştirin</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-3">
-                  <Label>Theme</Label>
+                  <Label>Tema</Label>
                   <div className="grid grid-cols-2 gap-4">
                     {(['light', 'dark'] as const).map((t) => (
                       <button
@@ -101,7 +89,7 @@ export function SettingsClient() {
                             <div className={`h-8 w-2 rounded-full ${t === 'dark' ? 'bg-slate-700' : 'bg-slate-300'}`} />
                           </div>
                         </div>
-                        <span className="text-sm font-medium capitalize">{t} Mode</span>
+                        <span className="text-sm font-medium">{t === 'dark' ? 'Koyu Mod' : 'Açık Mod'}</span>
                         {theme === t && (
                           <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white text-xs">✓</div>
                         )}
@@ -110,15 +98,14 @@ export function SettingsClient() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Language</Label>
-                  <Select defaultValue="en">
+                  <Label>Dil</Label>
+                  <Select defaultValue="tr">
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="tr">Türkçe</SelectItem>
                       <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="es">Español</SelectItem>
-                      <SelectItem value="fr">Français</SelectItem>
                       <SelectItem value="de">Deutsch</SelectItem>
-                      <SelectItem value="it">Italiano</SelectItem>
+                      <SelectItem value="fr">Français</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -131,15 +118,15 @@ export function SettingsClient() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="glass max-w-2xl">
               <CardHeader>
-                <CardTitle>Notification Preferences</CardTitle>
-                <CardDescription>Choose what alerts you want to receive</CardDescription>
+                <CardTitle>Bildirim Tercihleri</CardTitle>
+                <CardDescription>Hangi uyarıları almak istediğinizi seçin</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { key: 'lowStock' as const, label: 'Low Stock Alerts', desc: 'Get notified when products reach minimum stock level' },
-                  { key: 'newOrders' as const, label: 'New Orders', desc: 'Receive alerts for new sales orders' },
-                  { key: 'payments' as const, label: 'Payment Notifications', desc: 'Get notified about payment status changes' },
-                  { key: 'reports' as const, label: 'Report Summaries', desc: 'Weekly summary reports via email' },
+                  { key: 'lowStock' as const, label: 'Düşük Stok Uyarıları', desc: 'Ürünler minimum stok seviyesine ulaştığında bildir' },
+                  { key: 'newOrders' as const, label: 'Yeni Siparişler', desc: 'Yeni satış siparişleri için uyarı al' },
+                  { key: 'payments' as const, label: 'Ödeme Bildirimleri', desc: 'Ödeme durumu değişikliklerinde bildir' },
+                  { key: 'reports' as const, label: 'Rapor Özetleri', desc: 'Haftalık özet raporları e-posta ile' },
                 ].map((item) => (
                   <div key={item.key} className="flex items-center justify-between rounded-lg border border-border p-4">
                     <div>
@@ -158,32 +145,23 @@ export function SettingsClient() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="glass max-w-2xl">
               <CardHeader>
-                <CardTitle>Security Settings</CardTitle>
-                <CardDescription>Manage password and authentication settings</CardDescription>
+                <CardTitle>Güvenlik Ayarları</CardTitle>
+                <CardDescription>Şifre ve kimlik doğrulama ayarlarını yönetin</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label>Current Password</Label>
-                    <Input type="password" placeholder="••••••••" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>New Password</Label>
-                    <Input type="password" placeholder="••••••••" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Confirm Password</Label>
-                    <Input type="password" placeholder="••••••••" />
-                  </div>
+                  <div className="space-y-2"><Label>Mevcut Şifre</Label><Input type="password" placeholder="••••••••" /></div>
+                  <div className="space-y-2"><Label>Yeni Şifre</Label><Input type="password" placeholder="••••••••" /></div>
+                  <div className="space-y-2"><Label>Şifre Tekrar</Label><Input type="password" placeholder="••••••••" /></div>
                 </div>
                 <div className="flex items-center justify-between rounded-lg border border-border p-4">
                   <div>
-                    <p className="text-sm font-medium">Two-Factor Authentication</p>
-                    <p className="text-xs text-muted-foreground">Add an extra layer of security to your account</p>
+                    <p className="text-sm font-medium">İki Faktörlü Kimlik Doğrulama</p>
+                    <p className="text-xs text-muted-foreground">Hesabınıza ekstra güvenlik katmanı ekleyin</p>
                   </div>
                   <Switch />
                 </div>
-                <Button className="gap-2"><Save className="h-4 w-4" />Update Security</Button>
+                <Button className="gap-2"><Save className="h-4 w-4" />Güvenliği Güncelle</Button>
               </CardContent>
             </Card>
           </motion.div>
@@ -193,20 +171,20 @@ export function SettingsClient() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="glass max-w-2xl">
               <CardHeader>
-                <CardTitle>Company Information</CardTitle>
-                <CardDescription>Manage your company details and tax settings</CardDescription>
+                <CardTitle>Şirket Bilgileri</CardTitle>
+                <CardDescription>Şirket bilgilerinizi ve vergi ayarlarını yönetin</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2"><Label>Company Name</Label><Input defaultValue="Marsiz Technologies" /></div>
-                  <div className="space-y-2"><Label>Tax ID</Label><Input defaultValue="TAX-MARSIZ-001" /></div>
-                  <div className="space-y-2"><Label>Currency</Label>
-                    <Select defaultValue="USD"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="USD">USD ($)</SelectItem><SelectItem value="EUR">EUR (€)</SelectItem><SelectItem value="GBP">GBP (£)</SelectItem></SelectContent></Select>
+                  <div className="space-y-2"><Label>Şirket Adı</Label><Input defaultValue="Marsiz Teknoloji A.Ş." /></div>
+                  <div className="space-y-2"><Label>Vergi No</Label><Input defaultValue="VKN-MARSIZ-001" /></div>
+                  <div className="space-y-2"><Label>Para Birimi</Label>
+                    <Select defaultValue="TRY"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TRY">TRY (₺)</SelectItem><SelectItem value="USD">USD ($)</SelectItem><SelectItem value="EUR">EUR (€)</SelectItem></SelectContent></Select>
                   </div>
-                  <div className="space-y-2"><Label>Default Tax Rate (%)</Label><Input type="number" defaultValue="8" /></div>
+                  <div className="space-y-2"><Label>Varsayılan KDV (%)</Label><Input type="number" defaultValue="8" /></div>
                 </div>
-                <div className="space-y-2"><Label>Address</Label><Input defaultValue="120 Commerce St, New York, NY" /></div>
-                <Button className="gap-2"><Save className="h-4 w-4" />Save Company</Button>
+                <div className="space-y-2"><Label>Adres</Label><Input defaultValue="Atatürk Cad. No:120, İstanbul" /></div>
+                <Button className="gap-2"><Save className="h-4 w-4" />Şirketi Kaydet</Button>
               </CardContent>
             </Card>
           </motion.div>
@@ -216,15 +194,15 @@ export function SettingsClient() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="glass max-w-2xl">
               <CardHeader>
-                <CardTitle>System Settings</CardTitle>
-                <CardDescription>Database, backup, and maintenance configuration</CardDescription>
+                <CardTitle>Sistem Ayarları</CardTitle>
+                <CardDescription>Veritabanı, yedekleme ve bakım yapılandırması</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { label: 'Automatic Backups', desc: 'Run daily database backups at 2:00 AM' },
-                  { label: 'Activity Logging', desc: 'Log all user actions for audit purposes' },
-                  { label: 'Soft Delete', desc: 'Soft delete records instead of permanent deletion' },
-                  { label: 'Multi-Company Mode', desc: 'Enable multi-company data isolation' },
+                  { label: 'Otomatik Yedekleme', desc: 'Her gün 02:00\'da veritabanı yedeği al' },
+                  { label: 'Aktivite Loglama', desc: 'Denetim için tüm kullanıcı işlemlerini kaydet' },
+                  { label: 'Yumuşak Silme', desc: 'Kalıcı silme yerine kayıtları yumuşak sil' },
+                  { label: 'Çoklu Şirket Modu', desc: 'Çoklu şirket veri izolasyonunu etkinleştir' },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between rounded-lg border border-border p-4">
                     <div>

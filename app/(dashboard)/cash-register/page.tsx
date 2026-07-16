@@ -1,15 +1,9 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { CashRegisterClient } from '@/components/cash-register/cash-register-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { Banknote } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function CashRegisterPage() {
-  return (
-    <ModulePlaceholder
-      title="Cash Register"
-      description="Manage daily cash register operations"
-      icon={Banknote}
-      features={['Open Register', 'Close Register', 'Cash In/Out', 'Daily Reconciliation', 'Register Reports']}
-    />
-  );
+export default async function CashRegisterPage() {
+  const { data } = await supabase.from('cash_register').select('*').order('transaction_date', { ascending: false });
+  return <CashRegisterClient initialTransactions={data || []} />;
 }

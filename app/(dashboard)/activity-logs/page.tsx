@@ -1,15 +1,9 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { ActivityLogsClient } from '@/components/activity-logs/activity-logs-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { History } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function ActivityLogsPage() {
-  return (
-    <ModulePlaceholder
-      title="Activity Logs"
-      description="Audit trail of all user actions and system events"
-      icon={History}
-      features={['Action History', 'User Activity', 'Change Tracking', 'Export Logs', 'Filter by Date/Module']}
-    />
-  );
+export default async function ActivityLogsPage() {
+  const { data } = await supabase.from('activity_logs').select('*').order('created_at', { ascending: false });
+  return <ActivityLogsClient initialLogs={data || []} />;
 }

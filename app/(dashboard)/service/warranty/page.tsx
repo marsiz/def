@@ -1,15 +1,21 @@
-"use client";
+import { supabase } from '@/lib/supabase';
+import { ServiceClient } from '@/components/service/service-client';
 
-import { ModulePlaceholder } from '@/components/shared/module-placeholder';
-import { ShieldCheck } from 'lucide-react';
+export const dynamic = 'force-dynamic';
 
-export default function WarrantyPage() {
+export default async function WarrantyPage() {
+  const [{ data: tickets }, { data: customers }] = await Promise.all([
+    supabase.from('service_tickets').select('*,customer:customers(*)').order('created_at', { ascending: false }),
+    supabase.from('customers').select('*').order('name'),
+  ]);
+
   return (
-    <ModulePlaceholder
-      title="Warranty Tracking"
-      description="Manage product warranties and claims"
-      icon={ShieldCheck}
-      features={['Warranty Registration', 'Warranty Claims', 'Expiration Alerts', 'IMEI Lookup', 'Claim Status Tracking']}
+    <ServiceClient
+      initialTickets={tickets || []}
+      customers={customers || []}
+      title="Garanti Takibi"
+      description="Garanti kapsamındaki ürün ve servis kayıtlarını yönetin"
+      warrantyOnly
     />
   );
 }

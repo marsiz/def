@@ -17,7 +17,7 @@ function getPageTitle(pathname: string): string {
       }
     }
   }
-  return 'Dashboard';
+  return 'Gösterge Paneli';
 }
 
 export function Navbar() {
@@ -41,7 +41,7 @@ export function Navbar() {
         <div className="flex flex-col">
           <h1 className="text-lg font-bold tracking-tight">{pageTitle}</h1>
           <p className="hidden text-xs text-muted-foreground sm:block">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {new Date().toLocaleDateString('tr-TR', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>
 
@@ -50,7 +50,7 @@ export function Navbar() {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Ara..."
               className="h-9 w-48 rounded-lg border border-border bg-muted/30 pl-9 pr-3 text-sm outline-none transition-all focus:w-64 focus:border-primary focus:bg-card"
             />
           </div>

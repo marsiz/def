@@ -2,14 +2,12 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Pencil, Trash2, Users, Mail, Phone, MapPin, Building2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Users, Mail, Phone, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -97,9 +95,9 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Customers"
-        description="Manage customer accounts, balances, and credit limits"
-        actionLabel="Add Customer"
+        title="Müşteriler"
+        description="Müşteri hesaplarını, bakiyeleri ve kredi limitlerini yönetin"
+        actionLabel="Müşteri Ekle"
         actionIcon={<Plus className="h-4 w-4" />}
         onAction={openCreate}
       />
@@ -107,7 +105,7 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search by name, email, company, or phone..."
+          placeholder="İsim, e-posta, şirket veya telefona göre ara..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
@@ -119,9 +117,9 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
           <CardContent>
             <EmptyState
               icon={<Users className="h-8 w-8" />}
-              title="No customers found"
-              description={search ? "Try adjusting your search" : "Add your first customer to get started"}
-              action={!search && <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />Add Customer</Button>}
+              title="Müşteri bulunamadı"
+              description={search ? "Aramanızı değiştirmeyi deneyin" : "Başlamak için ilk müşterinizi ekleyin"}
+              action={!search && <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />Müşteri Ekle</Button>}
             />
           </CardContent>
         </Card>
@@ -179,13 +177,13 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
 
                     <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3">
                       <div>
-                        <p className="text-xs text-muted-foreground">Balance</p>
+                        <p className="text-xs text-muted-foreground">Bakiye</p>
                         <p className={`font-semibold ${c.balance > 0 ? 'text-destructive' : 'text-success'}`}>
                           {formatCurrency(c.balance)}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-muted-foreground">Credit Limit</p>
+                        <p className="text-xs text-muted-foreground">Kredi Limiti</p>
                         <p className="font-medium">{formatCurrency(c.credit_limit)}</p>
                       </div>
                     </div>
@@ -200,52 +198,52 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
-            <DialogTitle>{editing.id ? 'Edit Customer' : 'New Customer'}</DialogTitle>
+            <DialogTitle>{editing.id ? 'Müşteri Düzenle' : 'Yeni Müşteri'}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Name *</Label>
-                <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="Customer name" />
+                <Label>Ad *</Label>
+                <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="Müşteri adı" />
               </div>
               <div className="space-y-2">
-                <Label>Company</Label>
-                <Input value={editing.company} onChange={(e) => setEditing({ ...editing, company: e.target.value })} placeholder="Company name" />
+                <Label>Şirket</Label>
+                <Input value={editing.company} onChange={(e) => setEditing({ ...editing, company: e.target.value })} placeholder="Şirket adı" />
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input type="email" value={editing.email} onChange={(e) => setEditing({ ...editing, email: e.target.value })} placeholder="email@example.com" />
+                <Label>E-posta</Label>
+                <Input type="email" value={editing.email} onChange={(e) => setEditing({ ...editing, email: e.target.value })} placeholder="email@ornek.com" />
               </div>
               <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input value={editing.phone} onChange={(e) => setEditing({ ...editing, phone: e.target.value })} placeholder="+1-555-0100" />
+                <Label>Telefon</Label>
+                <Input value={editing.phone} onChange={(e) => setEditing({ ...editing, phone: e.target.value })} placeholder="+90 555 000 0000" />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Address</Label>
-              <Textarea value={editing.address} onChange={(e) => setEditing({ ...editing, address: e.target.value })} rows={2} placeholder="Street address" />
+              <Label>Adres</Label>
+              <Textarea value={editing.address} onChange={(e) => setEditing({ ...editing, address: e.target.value })} rows={2} placeholder="Adres" />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Tax ID</Label>
-                <Input value={editing.tax_id} onChange={(e) => setEditing({ ...editing, tax_id: e.target.value })} placeholder="TAX-001" />
+                <Label>Vergi No</Label>
+                <Input value={editing.tax_id} onChange={(e) => setEditing({ ...editing, tax_id: e.target.value })} placeholder="VKN-001" />
               </div>
               <div className="space-y-2">
-                <Label>Credit Limit ($)</Label>
+                <Label>Kredi Limiti (₺)</Label>
                 <Input type="number" step="0.01" value={editing.credit_limit} onChange={(e) => setEditing({ ...editing, credit_limit: e.target.value })} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Notes</Label>
-              <Textarea value={editing.notes} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} rows={2} placeholder="Internal notes" />
+              <Label>Notlar</Label>
+              <Textarea value={editing.notes} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} rows={2} placeholder="Dahili notlar" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>İptal</Button>
             <Button onClick={handleSave} disabled={saving || !editing.name}>
-              {saving ? 'Saving...' : editing.id ? 'Update' : 'Create'}
+              {saving ? 'Kaydediliyor...' : editing.id ? 'Güncelle' : 'Oluştur'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -254,10 +252,10 @@ export function CustomersClient({ initialCustomers }: { initialCustomers: Custom
       <ConfirmDialog
         open={open}
         onOpenChange={setOpen}
-        title="Delete Customer"
-        description="Are you sure you want to delete this customer? This action can be undone."
+        title="Müşteriyi Sil"
+        description="Bu müşteriyi silmek istediğinizden emin misiniz? Bu işlem geri alınabilir."
         onConfirm={handleConfirm}
-        confirmLabel="Delete"
+        confirmLabel="Sil"
       />
     </div>
   );
