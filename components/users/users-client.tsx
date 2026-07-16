@@ -1,219 +1,321 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Pencil, Trash2, UserCog, Shield } from 'lucide-react';
+import { UserCog, Shield, CheckCircle2, XCircle, Loader2, RefreshCw, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/shared/page-header';
-import { ConfirmDialog, useConfirmDialog } from '@/components/shared/confirm-dialog';
 import { EmptyState } from '@/components/shared/states';
+import { useAuth, type UserProfile } from '@/components/auth-provider';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 import { formatDateTime } from '@/lib/format';
 
-interface DemoUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  last_login: string | null;
-  status: 'active' | 'inactive';
+type Role = 'admin' | 'user';
+
+interface UserRow extends UserProfile {
+  created_at?: string;
 }
-
-const DEMO_USERS: DemoUser[] = [
-  { id: '1', name: 'Ahmet Yılmaz', email: 'ahmet@marsiz.com', role: 'Admin', last_login: new Date(Date.now() - 3600000).toISOString(), status: 'active' },
-  { id: '2', name: 'Ayşe Kaya', email: 'ayse@marsiz.com', role: 'Müdür', last_login: new Date(Date.now() - 86400000).toISOString(), status: 'active' },
-  { id: '3', name: 'Mehmet Demir', email: 'mehmet@marsiz.com', role: 'Satış Temsilcisi', last_login: new Date(Date.now() - 7200000).toISOString(), status: 'active' },
-  { id: '4', name: 'Fatma Şahin', email: 'fatma@marsiz.com', role: 'Muhasebe', last_login: new Date(Date.now() - 604800000).toISOString(), status: 'inactive' },
-  { id: '5', name: 'Ali Çelik', email: 'ali@marsiz.com', role: 'Teknisyen', last_login: new Date(Date.now() - 432000000).toISOString(), status: 'active' },
-];
-
-const ROLES = ['Admin', 'Müdür', 'Satış Temsilcisi', 'Teknisyen', 'Muhasebe'];
-
-interface UserForm {
-  id?: string;
-  name: string;
-  email: string;
-  role: string;
-  password: string;
-}
-
-const emptyForm: UserForm = { name: '', email: '', role: '', password: '' };
 
 export function UsersClient() {
-  const [users, setUsers] = useState<DemoUser[]>(DEMO_USERS);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<UserForm>(emptyForm);
-  const { open, setOpen, confirm, handleConfirm } = useConfirmDialog();
+  const { profile, refreshProfile } = useAuth();
+  const { toast } = useToast();
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'active' | 'inactive'>('all');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const openCreate = () => { setEditing(emptyForm); setDialogOpen(true); };
-
-  const openEdit = (u: DemoUser) => {
-    setEditing({ id: u.id, name: u.name, email: u.email, role: u.role, password: '' });
-    setDialogOpen(true);
-  };
-
-  const handleSave = () => {
-    if (!editing.name || !editing.email || !editing.role) return;
-    if (editing.id) {
-      setUsers((prev) => prev.map((u) => (u.id === editing.id ? { ...u, name: editing.name, email: editing.email, role: editing.role } : u)));
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      toast({ title: 'Kullanıcılar yüklenemedi', description: error.message, variant: 'destructive' });
     } else {
-      const newUser: DemoUser = {
-        id: Date.now().toString(),
-        name: editing.name,
-        email: editing.email,
-        role: editing.role,
-        last_login: null,
-        status: 'active',
-      };
-      setUsers((prev) => [newUser, ...prev]);
+      setUsers((data || []) as UserRow[]);
     }
-    setDialogOpen(false);
+    setLoading(false);
+  }, [toast]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const updateField = async (id: string, field: 'is_approved' | 'is_active' | 'role', value: boolean | Role) => {
+    setUpdatingId(id);
+    const { error } = await supabase.from('user_profiles').update({ [field]: value }).eq('id', id);
+    if (error) {
+      toast({ title: 'Güncelleme başarısız', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Güncellendi', description: 'Kullanıcı durumu güncellendi.' });
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, [field]: value } : u)));
+      if (id === profile?.id) refreshProfile();
+    }
+    setUpdatingId(null);
   };
 
-  const handleDelete = (id: string) => {
-    confirm(() => {
-      setUsers((prev) => prev.filter((u) => u.id !== id));
-    });
-  };
+  const filtered = users.filter((u) => {
+    const matchesSearch =
+      !search ||
+      u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase());
+    const matchesFilter =
+      filter === 'all' ||
+      (filter === 'pending' && !u.is_approved) ||
+      (filter === 'approved' && u.is_approved) ||
+      (filter === 'active' && u.is_active) ||
+      (filter === 'inactive' && !u.is_active);
+    return matchesSearch && matchesFilter;
+  });
 
-  const toggleStatus = (id: string) => {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' } : u)));
-  };
+  const pendingCount = users.filter((u) => !u.is_approved).length;
+
+  const isAdmin = profile?.role === 'admin';
+
+  if (!isAdmin) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Kullanıcı Yönetimi" description="Bu modüle erişim için yönetici yetkisi gereklidir" />
+        <Card className="glass">
+          <CardContent className="py-12">
+            <EmptyState
+              icon={<Shield className="h-8 w-8" />}
+              title="Yetkisiz Erişim"
+              description="Bu sayfayı görüntülemek için yönetici izinlerine ihtiyacınız var."
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Kullanıcı Yönetimi"
-        description="Sistem kullanıcılarını ve erişim yetkilerini yönetin"
-        actionLabel="Kullanıcı Ekle"
-        actionIcon={<Plus className="h-4 w-4" />}
-        onAction={openCreate}
+        description="Kullanıcıları onaylayın, reddedin ve yetkilerini yönetin"
+        actionLabel="Yenile"
+        actionIcon={<RefreshCw className="h-4 w-4" />}
+        onAction={fetchUsers}
       />
 
+      {pendingCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4"
+        >
+          <Clock className="h-5 w-5 text-warning" />
+          <div>
+            <p className="font-medium text-warning">{pendingCount} kullanıcı onay bekliyor</p>
+            <p className="text-sm text-muted-foreground">Onay bekleyen kullanıcıları yetkilendirmek için &quot;Onay Bekleyen&quot; sekmesine geçin.</p>
+          </div>
+        </motion.div>
+      )}
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <Input
+          placeholder="Kullanıcı ara..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="sm:max-w-xs"
+        />
+        <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+          <SelectTrigger className="sm:w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tümü</SelectItem>
+            <SelectItem value="pending">Onay Bekleyen</SelectItem>
+            <SelectItem value="approved">Onaylı</SelectItem>
+            <SelectItem value="active">Aktif</SelectItem>
+            <SelectItem value="inactive">Pasif</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList>
+          <TabsTrigger value="all">Tümü ({users.length})</TabsTrigger>
+          <TabsTrigger value="pending">Onay Bekleyen ({pendingCount})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="all">
+          <UserTable users={filtered} loading={loading} updatingId={updatingId} updateField={updateField} currentUserId={profile?.id} />
+        </TabsContent>
+        <TabsContent value="pending">
+          <UserTable
+            users={filtered.filter((u) => !u.is_approved)}
+            loading={loading}
+            updatingId={updatingId}
+            updateField={updateField}
+            currentUserId={profile?.id}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function UserTable({
+  users,
+  loading,
+  updatingId,
+  updateField,
+  currentUserId,
+}: {
+  users: UserRow[];
+  loading: boolean;
+  updatingId: string | null;
+  updateField: (id: string, field: 'is_approved' | 'is_active' | 'role', value: boolean | Role) => void;
+  currentUserId?: string;
+}) {
+  if (loading) {
+    return (
       <Card className="glass">
-        <CardContent className="p-0">
-          {users.length === 0 ? (
-            <EmptyState
-              icon={<UserCog className="h-8 w-8" />}
-              title="Kullanıcı bulunamadı"
-              description="Başlamak için ilk kullanıcınızı ekleyin"
-              action={<Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" />Kullanıcı Ekle</Button>}
-            />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ad Soyad</TableHead>
-                  <TableHead>E-posta</TableHead>
-                  <TableHead>Rol</TableHead>
-                  <TableHead>Son Giriş</TableHead>
-                  <TableHead>Durum</TableHead>
-                  <TableHead className="text-right">İşlemler</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <AnimatePresence>
-                  {users.map((u, i) => (
-                    <motion.tr key={u.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ delay: i * 0.02 }}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/50 text-muted-foreground">
-                            <UserCog className="h-4 w-4" />
-                          </div>
-                          {u.name}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="gap-1">
-                          <Shield className="h-3 w-3" />
-                          {u.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {u.last_login ? formatDateTime(u.last_login) : 'Hiç giriş yapmadı'}
-                      </TableCell>
-                      <TableCell>
-                        <button onClick={() => toggleStatus(u.id)} className="inline-flex">
-                          <Badge variant={u.status === 'active' ? 'default' : 'secondary'}>
-                            {u.status === 'active' ? 'Aktif' : 'Pasif'}
-                          </Badge>
-                        </button>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(u)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(u.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </TableBody>
-            </Table>
-          )}
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </CardContent>
       </Card>
+    );
+  }
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editing.id ? 'Kullanıcı Düzenle' : 'Kullanıcı Ekle'}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="space-y-2">
-              <Label>Ad Soyad *</Label>
-              <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="Ad Soyad" />
-            </div>
-            <div className="space-y-2">
-              <Label>E-posta *</Label>
-              <Input type="email" value={editing.email} onChange={(e) => setEditing({ ...editing, email: e.target.value })} placeholder="kullanici@marsiz.com" />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Rol *</Label>
-                <Select value={editing.role} onValueChange={(v) => setEditing({ ...editing, role: v })}>
-                  <SelectTrigger><SelectValue placeholder="Seç" /></SelectTrigger>
-                  <SelectContent>
-                    {ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Şifre{editing.id ? ' (boş bırakılırsa değişmez)' : ' *'}</Label>
-                <Input type="password" value={editing.password} onChange={(e) => setEditing({ ...editing, password: e.target.value })} placeholder="••••••••" />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>İptal</Button>
-            <Button onClick={handleSave} disabled={!editing.name || !editing.email || !editing.role || (!editing.id && !editing.password)}>
-              Kaydet
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+  if (users.length === 0) {
+    return (
+      <Card className="glass">
+        <CardContent className="py-12">
+          <EmptyState
+            icon={<UserCog className="h-8 w-8" />}
+            title="Kullanıcı bulunamadı"
+            description="Bu filtreye uygun kullanıcı yok."
+          />
+        </CardContent>
+      </Card>
+    );
+  }
 
-      <ConfirmDialog
-        open={open}
-        onOpenChange={setOpen}
-        title="Kullanıcıyı Sil"
-        description="Bu kullanıcıyı silmek istediğinizden emin misiniz?"
-        onConfirm={handleConfirm}
-        confirmLabel="Sil"
-      />
-    </div>
+  return (
+    <Card className="glass">
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Kullanıcı</TableHead>
+              <TableHead>Rol</TableHead>
+              <TableHead>Durum</TableHead>
+              <TableHead>Oluşturma</TableHead>
+              <TableHead className="text-right">İşlemler</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <AnimatePresence>
+              {users.map((u, i) => (
+                <motion.tr key={u.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ delay: i * 0.02 }}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <UserCog className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          {u.full_name || 'İsimsiz'}
+                          {u.id === currentUserId && (
+                            <Badge variant="outline" className="text-xs">Siz</Badge>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">{u.email}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={u.role}
+                      onValueChange={(v) => updateField(u.id, 'role', v as Role)}
+                      disabled={updatingId === u.id || u.id === currentUserId}
+                    >
+                      <SelectTrigger className="h-8 w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Yönetici</SelectItem>
+                        <SelectItem value="user">Kullanıcı</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      {u.is_approved ? (
+                        <Badge className="w-fit gap-1 bg-success/15 text-success hover:bg-success/20">
+                          <CheckCircle2 className="h-3 w-3" /> Onaylı
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="w-fit gap-1 border-warning/50 text-warning">
+                          <Clock className="h-3 w-3" /> Beklemede
+                        </Badge>
+                      )}
+                      {u.is_active ? (
+                        <Badge variant="secondary" className="w-fit">Aktif</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="w-fit text-muted-foreground">Pasif</Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {u.created_at ? formatDateTime(u.created_at) : '-'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      {updatingId === u.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          {!u.is_approved && (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="gap-1"
+                              onClick={() => updateField(u.id, 'is_approved', true)}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Onayla
+                            </Button>
+                          )}
+                          {u.is_approved && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1"
+                              onClick={() => updateField(u.id, 'is_approved', false)}
+                              disabled={u.id === currentUserId}
+                            >
+                              <XCircle className="h-3.5 w-3.5" /> Onayı Kaldır
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => updateField(u.id, 'is_active', !u.is_active)}
+                            disabled={u.id === currentUserId}
+                          >
+                            {u.is_active ? 'Pasifleştir' : 'Aktifleştir'}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </motion.tr>
+              ))}
+            </AnimatePresence>
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }

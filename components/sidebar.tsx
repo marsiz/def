@@ -4,12 +4,17 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Boxes } from 'lucide-react';
+import { ChevronDown, Boxes, LogOut } from 'lucide-react';
 import { navSections } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/components/auth-provider';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { profile, signOut } = useAuth();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(
     () =>
       Object.fromEntries(navSections.map((s) => [s.title, true]))
@@ -93,12 +98,20 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="border-t border-border/50 p-4">
         <div className="flex items-center gap-3 rounded-lg bg-muted/30 p-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-bold text-white">
-            YN
+            {profile?.full_name?.charAt(0).toUpperCase() || 'Y'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-medium">Yönetici Kullanıcı</p>
-            <p className="truncate text-xs text-muted-foreground">admin@marsiz.com</p>
+            <p className="truncate text-sm font-medium">{profile?.full_name || 'Yönetici'}</p>
+            <p className="truncate text-xs text-muted-foreground">{profile?.email || 'admin@marsiz.com'}</p>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0"
+            onClick={async () => { await signOut(); router.push('/login'); }}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>
