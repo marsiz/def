@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, History } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,13 +9,25 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PageHeader } from '@/components/shared/page-header';
 import { EmptyState } from '@/components/shared/states';
+import { supabase } from '@/lib/supabase';
 import { formatDateTime } from '@/lib/format';
 import type { ActivityLog } from '@/lib/types';
 
-export function ActivityLogsClient({ initialLogs }: { initialLogs: ActivityLog[] }) {
+export function ActivityLogsClient() {
+  const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [search, setSearch] = useState('');
 
-  const filtered = initialLogs.filter((l) => {
+  useEffect(() => {
+    supabase
+      .from('activity_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setLogs(data as ActivityLog[]);
+      });
+  }, []);
+
+  const filtered = logs.filter((l) => {
     const q = search.toLowerCase();
     return (
       (l.user_name || '').toLowerCase().includes(q) ||

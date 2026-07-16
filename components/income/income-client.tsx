@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Trash2, TrendingUp, Wallet, Layers } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -42,14 +42,25 @@ const emptyForm: IncomeForm = {
   reference: '',
 };
 
-export function IncomeClient({ initialIncomes }: { initialIncomes: Income[] }) {
-  const [incomes, setIncomes] = useState(initialIncomes);
+export function IncomeClient() {
+  const [incomes, setIncomes] = useState<Income[]>([]);
   const [search, setSearch] = useState('');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<IncomeForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const { open, setOpen, confirm, handleConfirm } = useConfirmDialog();
+
+  useEffect(() => {
+    supabase
+      .from('incomes')
+      .select('*')
+      .is('deleted_at', null)
+      .order('income_date', { ascending: false })
+      .then(({ data }) => {
+        if (data) setIncomes(data as Income[]);
+      });
+  }, []);
 
   const filtered = incomes.filter((e) => {
     const matchesSearch =

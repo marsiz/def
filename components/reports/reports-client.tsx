@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, TrendingUp, TrendingDown, DollarSign, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { PageHeader } from '@/components/shared/page-header';
 import { formatCurrency, formatCompactCurrency, formatDate } from '@/lib/format';
+import { supabase } from '@/lib/supabase';
 import type { Sale, Expense, Product, Customer } from '@/lib/types';
 
 const PIE_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
@@ -23,7 +24,25 @@ interface ReportsClientProps {
   products: Product[];
 }
 
-export function ReportsClient({ sales, expenses, products }: ReportsClientProps) {
+export function ReportsClient() {
+  const [sales, setSales] = useState<(Sale & { customer?: Customer | null })[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: sData }, { data: eData }, { data: pData }] = await Promise.all([
+        supabase.from('sales').select('*, customer:customers(*)').order('sale_date', { ascending: false }),
+        supabase.from('expenses').select('*').order('expense_date', { ascending: false }),
+        supabase.from('products').select('*').order('name'),
+      ]);
+      setSales((sData || []) as any);
+      setExpenses((eData || []) as Expense[]);
+      setProducts((pData || []) as Product[]);
+      setLoading(false);
+    })();
+  }, []);
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   const [reportType, setReportType] = useState<'sales' | 'expenses' | 'profit' | 'stock'>('sales');
 

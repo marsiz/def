@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ShoppingCart, Trash2, Package, User, CreditCard, Banknote, Building2, CheckCircle2, Plus, Minus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,7 +31,22 @@ interface CartItem {
 
 const TAX_RATE = 8;
 
-export function PosClient({ products, customers }: PosClientProps) {
+export function PosClient() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: pData }, { data: cData }] = await Promise.all([
+        supabase.from('products').select('*').order('name'),
+        supabase.from('customers').select('*').order('name'),
+      ]);
+      setProducts((pData || []) as Product[]);
+      setCustomers((cData || []) as Customer[]);
+      setLoading(false);
+    })();
+  }, []);
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerId, setCustomerId] = useState('');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Check, Trash2, Info, CheckCircle2, AlertTriangle, Filter } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,10 +20,20 @@ const TYPE_META: Record<string, { label: string; icon: React.ReactNode; classNam
   warning: { label: 'Uyarı', icon: <AlertTriangle className="h-4 w-4" />, className: 'bg-amber-500/10 text-amber-600' },
 };
 
-export function NotificationsClient({ initialNotifications }: { initialNotifications: Notification[] }) {
-  const [notifications, setNotifications] = useState(initialNotifications);
+export function NotificationsClient() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [typeFilter, setTypeFilter] = useState<'all' | 'info' | 'success' | 'warning'>('all');
   const { open, setOpen, confirm, handleConfirm } = useConfirmDialog();
+
+  useEffect(() => {
+    supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setNotifications(data as Notification[]);
+      });
+  }, []);
 
   const filtered = notifications.filter((n) => typeFilter === 'all' || n.type === typeFilter);
   const unreadCount = notifications.filter((n) => !n.read).length;

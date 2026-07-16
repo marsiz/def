@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Pencil, Trash2, Package, AlertTriangle, Filter } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -62,8 +62,28 @@ const emptyForm: ProductForm = {
   has_serial_tracking: false,
 };
 
-export function ProductsClient({ initialProducts, categories, brands, suppliers }: ProductsClientProps) {
-  const [products, setProducts] = useState(initialProducts);
+export function ProductsClient() {
+  const [products, setProducts] = useState<(Product & { category?: Category | null; brand?: Brand | null })[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: prodData }, { data: catData }, { data: brandData }, { data: supData }] = await Promise.all([
+        supabase.from('products').select('*, category:categories(*), brand:brands(*), supplier:suppliers(*)').order('created_at', { ascending: false }),
+        supabase.from('categories').select('*').order('name'),
+        supabase.from('brands').select('*').order('name'),
+        supabase.from('suppliers').select('*').order('name'),
+      ]);
+      setProducts((prodData || []) as any);
+      setCategories((catData || []) as Category[]);
+      setBrands((brandData || []) as Brand[]);
+      setSuppliers((supData || []) as Supplier[]);
+      setLoading(false);
+    })();
+  }, []);
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
   const [dialogOpen, setDialogOpen] = useState(false);

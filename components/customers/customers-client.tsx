@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Pencil, Trash2, Users, Mail, Phone, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,13 +34,24 @@ const emptyForm: CustomerForm = {
   name: '', email: '', phone: '', address: '', company: '', tax_id: '', credit_limit: '0', notes: '',
 };
 
-export function CustomersClient({ initialCustomers }: { initialCustomers: Customer[] }) {
-  const [customers, setCustomers] = useState(initialCustomers);
+export function CustomersClient() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CustomerForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const { open, setOpen, confirm, handleConfirm } = useConfirmDialog();
+
+  useEffect(() => {
+    supabase
+      .from('customers')
+      .select('*')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setCustomers(data as Customer[]);
+      });
+  }, []);
 
   const filtered = customers.filter(
     (c) =>

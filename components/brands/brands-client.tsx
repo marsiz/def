@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Pencil, Trash2, Award } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,9 +25,20 @@ interface BrandForm {
 
 const emptyForm: BrandForm = { name: '', description: '' };
 
-export function BrandsClient({ initialBrands }: { initialBrands: Brand[] }) {
-  const [brands, setBrands] = useState(initialBrands);
+export function BrandsClient() {
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    supabase
+      .from('brands')
+      .select('*')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setBrands(data as Brand[]);
+      });
+  }, []);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<BrandForm>(emptyForm);
   const [saving, setSaving] = useState(false);

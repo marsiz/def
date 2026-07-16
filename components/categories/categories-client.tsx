@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Pencil, Trash2, Tags } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,9 +25,20 @@ interface CategoryForm {
 
 const emptyForm: CategoryForm = { name: '', description: '' };
 
-export function CategoriesClient({ initialCategories }: { initialCategories: Category[] }) {
-  const [categories, setCategories] = useState(initialCategories);
+export function CategoriesClient() {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    supabase
+      .from('categories')
+      .select('*')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setCategories(data as Category[]);
+      });
+  }, []);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CategoryForm>(emptyForm);
   const [saving, setSaving] = useState(false);

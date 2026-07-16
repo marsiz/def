@@ -12,12 +12,8 @@ import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/format';
 import type { Product } from '@/lib/types';
 
-interface BarcodeClientProps {
-  initialProducts: Product[];
-}
-
-export function BarcodeClient({ initialProducts }: BarcodeClientProps) {
-  const [products] = useState(initialProducts);
+export function BarcodeClient() {
+  const [products, setProducts] = useState<Product[]>([]);
   const [query, setQuery] = useState('');
   const [foundProduct, setFoundProduct] = useState<Product | null>(null);
   const [searched, setSearched] = useState(false);
@@ -25,6 +21,14 @@ export function BarcodeClient({ initialProducts }: BarcodeClientProps) {
 
   useEffect(() => {
     inputRef.current?.focus();
+    supabase
+      .from('products')
+      .select('*,category:categories(*),brand:brands(*)')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setProducts(data as Product[]);
+      });
   }, []);
 
   const handleSearch = async () => {

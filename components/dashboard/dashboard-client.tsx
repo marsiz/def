@@ -1,7 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, DollarSign, Wallet, Users, Package, AlertCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Wallet, Users, Package, AlertCircle, ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,6 +12,7 @@ import {
 } from 'recharts';
 import type { DashboardStats } from '@/lib/types';
 import { formatCurrency, formatCompactCurrency, timeAgo } from '@/lib/format';
+import { supabase } from '@/lib/supabase';
 
 const PIE_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
@@ -51,7 +53,92 @@ function StatCard({ title, value, change, trend, icon, delay }: StatCardProps) {
   );
 }
 
-export function DashboardClient({ stats }: { stats: DashboardStats }) {
+export function DashboardClient() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString();
+
+      const [
+        { data: todaySales }, { data: monthSales }, { data: monthExpenses },
+        { data: outstanding }, { data: customers }, { data: products },
+        { data: topProductsData }, { data: latestOrders }, { data: revenueRaw },
+        { data: expenseRaw }, { data: categorySales },
+      ] = await Promise.all([
+        supabase.from('sales').select('total_amount').gte('sale_date', todayStart).eq('status', 'paid'),
+        supabase.from('sales').select('total_amount').gte('sale_date', monthStart).eq('status', 'paid'),
+        supabase.from('expenses').select('amount').gte('expense_date', monthStart.slice(0, 10)),
+        supabase.from('sales').select('total_amount,paid_amount').eq('status', 'pending'),
+        supabase.from('customers').select('id', { count: 'exact' }),
+        supabase.from('products').select('cost_price,stock_quantity'),
+        supabase.from('sale_items').select('product_name,quantity,subtotal').gte('created_at', monthStart).order('quantity', { ascending: false }).limit(50),
+        supabase.from('sales').select('*,customer:customers(*)').order('sale_date', { ascending: false }).limit(8),
+        supabase.from('sales').select('sale_date,total_amount').gte('sale_date', thirtyDaysAgo).order('sale_date', { ascending: true }),
+        supabase.from('expenses').select('expense_date,amount').gte('expense_date', thirtyDaysAgo.slice(0, 10)).order('expense_date', { ascending: true }),
+        supabase.from('sale_items').select('subtotal,product:products(category:categories(name))').gte('created_at', monthStart),
+      ]);
+
+      const todaySalesTotal = (todaySales || []).reduce((s, r: any) => s + Number(r.total_amount), 0);
+      const monthSalesTotal = (monthSales || []).reduce((s, r: any) => s + Number(r.total_amount), 0);
+      const monthExpensesTotal = (monthExpenses || []).reduce((s, r: any) => s + Number(r.amount), 0);
+      const outstandingTotal = (outstanding || []).reduce((s, r: any) => s + (Number(r.total_amount) - Number(r.paid_amount)), 0);
+      const stockValue = (products || []).reduce((s, r: any) => s + Number(r.cost_price) * Number(r.stock_quantity), 0);
+
+      const productMap = new Map<string, { quantity: number; revenue: number }>();
+      (topProductsData || []).forEach((item: any) => {
+        const existing = productMap.get(item.product_name) || { quantity: 0, revenue: 0 };
+        existing.quantity += Number(item.quantity);
+        existing.revenue += Number(item.subtotal);
+        productMap.set(item.product_name, existing);
+      });
+      const topProducts = Array.from(productMap.entries()).map(([name, v]) => ({ name, quantity: v.quantity, revenue: v.revenue })).sort((a, b) => b.quantity - a.quantity).slice(0, 5);
+
+      const dateMap = new Map<string, { revenue: number; expenses: number }>();
+      (revenueRaw || []).forEach((r: any) => {
+        const day = new Date(r.sale_date).toISOString().slice(0, 10);
+        const ex = dateMap.get(day) || { revenue: 0, expenses: 0 };
+        ex.revenue += Number(r.total_amount);
+        dateMap.set(day, ex);
+      });
+      (expenseRaw || []).forEach((r: any) => {
+        const day = r.expense_date;
+        const ex = dateMap.get(day) || { revenue: 0, expenses: 0 };
+        ex.expenses += Number(r.amount);
+        dateMap.set(day, ex);
+      });
+      const revenueData = Array.from(dateMap.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([date, v]) => ({ date: new Date(date).toLocaleDateString('tr-TR', { month: 'short', day: 'numeric' }), revenue: Math.round(v.revenue), expenses: Math.round(v.expenses), profit: Math.round(v.revenue - v.expenses) }));
+
+      const catMap = new Map<string, number>();
+      (categorySales || []).forEach((r: any) => {
+        const catName = r?.product?.category?.name || 'Kategorisiz';
+        catMap.set(catName, (catMap.get(catName) || 0) + Number(r.subtotal));
+      });
+      const salesByCategory = Array.from(catMap.entries()).map(([name, value]) => ({ name, value: Math.round(value) }));
+      const cashFlowData = revenueData.map((d) => ({ date: d.date, inflow: d.revenue, outflow: d.expenses }));
+
+      setStats({
+        todaySales: todaySalesTotal, monthlySales: monthSalesTotal, expenses: monthExpensesTotal,
+        profit: monthSalesTotal - monthExpensesTotal, outstandingPayments: outstandingTotal,
+        customerCount: customers?.length || 0, stockValue, topProducts,
+        latestOrders: (latestOrders || []) as any, revenueData, salesByCategory, cashFlowData,
+      });
+      setLoading(false);
+    })();
+  }, []);
+
+  if (loading || !stats) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <motion.div

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Pencil, Eye, X, FileText, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -58,8 +58,25 @@ const STATUS_VARIANTS: Record<string, 'secondary' | 'default' | 'destructive'> =
   rejected: 'destructive',
 };
 
-export function QuotesClient({ initialQuotes, customers, products }: QuotesClientProps) {
-  const [quotes, setQuotes] = useState(initialQuotes);
+export function QuotesClient() {
+  const [quotes, setQuotes] = useState<(Quote & { customer?: Customer | null })[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: qData }, { data: custData }, { data: prodData }] = await Promise.all([
+        supabase.from('quotes').select('*, customer:customers(*)').order('created_at', { ascending: false }),
+        supabase.from('customers').select('*').order('name'),
+        supabase.from('products').select('*').order('name'),
+      ]);
+      setQuotes((qData || []) as any);
+      setCustomers((custData || []) as Customer[]);
+      setProducts((prodData || []) as Product[]);
+      setLoading(false);
+    })();
+  }, []);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createOpen, setCreateOpen] = useState(false);

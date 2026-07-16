@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Pencil, Trash2, Landmark, Building2, CreditCard, Hash } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -40,9 +40,20 @@ const emptyForm: BankAccountForm = {
   account_type: 'checking',
 };
 
-export function BankAccountsClient({ initialAccounts }: { initialAccounts: BankAccount[] }) {
-  const [accounts, setAccounts] = useState(initialAccounts);
+export function BankAccountsClient() {
+  const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    supabase
+      .from('bank_accounts')
+      .select('*')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setAccounts(data as BankAccount[]);
+      });
+  }, []);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<BankAccountForm>(emptyForm);
   const [saving, setSaving] = useState(false);

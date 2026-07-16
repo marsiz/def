@@ -1,20 +1,7 @@
-import { supabase } from '@/lib/supabase';
 import { ServiceClient } from '@/components/service/service-client';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ServicePage() {
-  const [{ data: tickets }, { data: customers }] = await Promise.all([
-    supabase.from('service_tickets').select('*,customer:customers(*)').order('created_at', { ascending: false }),
-    supabase.from('customers').select('*').order('name'),
-  ]);
-
-  return (
-    <ServiceClient
-      initialTickets={tickets || []}
-      customers={customers || []}
-      title="Servis Takibi"
-      description="Müşteri cihazları için servis ticketleri açın ve takip edin"
-    />
-  );
+export default function ServicePage() {
+  return <ServiceClient title="Servis Takibi" description="Müşteri cihazları için servis ticketleri açın ve takip edin" />;
 }

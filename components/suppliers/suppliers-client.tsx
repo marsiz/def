@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Pencil, Trash2, Truck, Mail, Phone, MapPin, User } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,13 +30,24 @@ const emptyForm: SupplierForm = {
   name: '', contact_person: '', email: '', phone: '', address: '',
 };
 
-export function SuppliersClient({ initialSuppliers }: { initialSuppliers: Supplier[] }) {
-  const [suppliers, setSuppliers] = useState(initialSuppliers);
+export function SuppliersClient() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<SupplierForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const { open, setOpen, confirm, handleConfirm } = useConfirmDialog();
+
+  useEffect(() => {
+    supabase
+      .from('suppliers')
+      .select('*')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setSuppliers(data as Supplier[]);
+      });
+  }, []);
 
   const filtered = suppliers.filter(
     (s) =>

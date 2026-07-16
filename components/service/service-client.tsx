@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Pencil, Trash2, Wrench, ShieldCheck } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -69,8 +69,24 @@ interface ServiceClientProps {
   warrantyOnly?: boolean;
 }
 
-export function ServiceClient({ initialTickets, customers, title, description, warrantyOnly }: ServiceClientProps) {
-  const [tickets, setTickets] = useState(initialTickets);
+export function ServiceClient({ title, description, warrantyOnly }: { title: string; description: string; warrantyOnly?: boolean }) {
+  const [tickets, setTickets] = useState<(ServiceTicket & { customer?: Customer | null })[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      let query = supabase.from('service_tickets').select('*, customer:customers(*)').order('created_at', { ascending: false });
+      if (warrantyOnly) query = query.eq('warranty', true);
+      const [{ data: tData }, { data: custData }] = await Promise.all([
+        query,
+        supabase.from('customers').select('*').order('name'),
+      ]);
+      setTickets((tData || []) as any);
+      setCustomers((custData || []) as Customer[]);
+      setLoading(false);
+    })();
+  }, [warrantyOnly]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);

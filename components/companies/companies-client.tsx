@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Pencil, Trash2, Building2, Phone, Mail, MapPin, Hash, Coins } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -43,12 +43,23 @@ const emptyForm: CompanyForm = {
   is_active: true,
 };
 
-export function CompaniesClient({ initialCompanies }: { initialCompanies: Company[] }) {
-  const [companies, setCompanies] = useState(initialCompanies);
+export function CompaniesClient() {
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CompanyForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const { open, setOpen, confirm, handleConfirm } = useConfirmDialog();
+
+  useEffect(() => {
+    supabase
+      .from('companies')
+      .select('*')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setCompanies(data as Company[]);
+      });
+  }, []);
 
   const openCreate = () => { setEditing(emptyForm); setDialogOpen(true); };
 

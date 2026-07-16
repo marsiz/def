@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Trash2, CreditCard, TrendingDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -42,14 +42,25 @@ const emptyForm: ExpenseForm = {
   reference: '',
 };
 
-export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[] }) {
-  const [expenses, setExpenses] = useState(initialExpenses);
+export function ExpensesClient() {
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ExpenseForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const { open, setOpen, confirm, handleConfirm } = useConfirmDialog();
+
+  useEffect(() => {
+    supabase
+      .from('expenses')
+      .select('*')
+      .is('deleted_at', null)
+      .order('expense_date', { ascending: false })
+      .then(({ data }) => {
+        if (data) setExpenses(data as Expense[]);
+      });
+  }, []);
 
   const filtered = expenses.filter((e) => {
     const matchesSearch =

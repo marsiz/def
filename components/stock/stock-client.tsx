@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Package, AlertTriangle, Filter, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,10 +20,6 @@ import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/format';
 import type { Product, Category, Brand, Supplier } from '@/lib/types';
 
-interface StockClientProps {
-  initialProducts: (Product & { category?: Category | null; brand?: Brand | null; supplier?: Supplier | null })[];
-}
-
 interface StockMovementForm {
   productId: string;
   productName: string;
@@ -42,13 +38,24 @@ const emptyMovement: StockMovementForm = {
   notes: '',
 };
 
-export function StockClient({ initialProducts }: StockClientProps) {
-  const [products, setProducts] = useState(initialProducts);
+export function StockClient() {
+  const [products, setProducts] = useState<(Product & { category?: Category | null; brand?: Brand | null; supplier?: Supplier | null })[]>([]);
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [movement, setMovement] = useState<StockMovementForm>(emptyMovement);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    supabase
+      .from('products')
+      .select('*,category:categories(*),brand:brands(*),supplier:suppliers(*)')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setProducts(data as (Product & { category?: Category | null; brand?: Brand | null; supplier?: Supplier | null })[]);
+      });
+  }, []);
 
   const filtered = products.filter((p) => {
     const matchesSearch =

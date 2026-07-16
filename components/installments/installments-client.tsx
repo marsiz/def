@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Trash2, CalendarClock, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -58,14 +58,22 @@ const emptyForm: InstallmentForm = {
   notes: '',
 };
 
-export function InstallmentsClient({
-  initialInstallments,
-  customers,
-}: {
-  initialInstallments: (Installment & { customer?: Customer | null })[];
-  customers: Customer[];
-}) {
-  const [installments, setInstallments] = useState(initialInstallments);
+export function InstallmentsClient() {
+  const [installments, setInstallments] = useState<(Installment & { customer?: Customer | null })[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: instData }, { data: custData }] = await Promise.all([
+        supabase.from('installments').select('*, customer:customers(*)').order('created_at', { ascending: false }),
+        supabase.from('customers').select('*').order('name'),
+      ]);
+      setInstallments((instData || []) as any);
+      setCustomers((custData || []) as Customer[]);
+      setLoading(false);
+    })();
+  }, []);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);

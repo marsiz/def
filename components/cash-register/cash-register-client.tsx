@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Trash2, Banknote, ArrowDownCircle, ArrowUpCircle, Wallet } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,14 +36,25 @@ const emptyForm: CashForm = {
   reference: '',
 };
 
-export function CashRegisterClient({ initialTransactions }: { initialTransactions: CashTransaction[] }) {
-  const [transactions, setTransactions] = useState(initialTransactions);
+export function CashRegisterClient() {
+  const [transactions, setTransactions] = useState<CashTransaction[]>([]);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CashForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const { open, setOpen, confirm, handleConfirm } = useConfirmDialog();
+
+  useEffect(() => {
+    supabase
+      .from('cash_register')
+      .select('*')
+      .is('deleted_at', null)
+      .order('transaction_date', { ascending: false })
+      .then(({ data }) => {
+        if (data) setTransactions(data as CashTransaction[]);
+      });
+  }, []);
 
   const filtered = transactions.filter((t) => {
     const matchesSearch =

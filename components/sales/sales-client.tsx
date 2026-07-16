@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Trash2, Receipt, Eye, X, Printer, Download } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,8 +35,25 @@ interface CartItem {
   subtotal: number;
 }
 
-export function SalesClient({ initialSales, customers, products }: SalesClientProps) {
-  const [sales, setSales] = useState(initialSales);
+export function SalesClient() {
+  const [sales, setSales] = useState<(Sale & { customer?: Customer | null })[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: sData }, { data: custData }, { data: prodData }] = await Promise.all([
+        supabase.from('sales').select('*, customer:customers(*)').order('sale_date', { ascending: false }),
+        supabase.from('customers').select('*').order('name'),
+        supabase.from('products').select('*').order('name'),
+      ]);
+      setSales((sData || []) as any);
+      setCustomers((custData || []) as Customer[]);
+      setProducts((prodData || []) as Product[]);
+      setLoading(false);
+    })();
+  }, []);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createOpen, setCreateOpen] = useState(false);
