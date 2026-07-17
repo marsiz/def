@@ -18,7 +18,14 @@ export default function Home() {
       }
 
       // Try auto-setup admin (only creates if no admin exists)
-      await supabase.rpc('auto_setup_admin');
+      try {
+        const { error: setupError } = await supabase.rpc('auto_setup_admin');
+        if (setupError) {
+          console.error('[Home] auto_setup_admin error:', setupError.code, setupError.message, setupError.details, setupError.hint);
+        }
+      } catch (err) {
+        console.error('[Home] auto_setup_admin exception:', err);
+      }
 
       // Redirect to login
       router.push('/login');

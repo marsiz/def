@@ -50,14 +50,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async (uid: string) => {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', uid)
-      .maybeSingle();
-    if (data) {
-      setProfile(data as UserProfile);
-    } else {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', uid)
+        .maybeSingle();
+      if (error) {
+        console.error('[fetchProfile] Error querying user_profiles:', error.code, error.message, error.details, error.hint);
+        setProfile(null);
+        return;
+      }
+      if (data) {
+        setProfile(data as UserProfile);
+      } else {
+        setProfile(null);
+      }
+    } catch (err) {
+      console.error('[fetchProfile] Unexpected error:', err);
       setProfile(null);
     }
   }, []);
@@ -67,17 +77,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setPermissions(null);
       return;
     }
-    const { data } = await supabase
-      .from('user_permissions')
-      .select('*')
-      .eq('user_id', uid);
-    if (data) {
-      const map: PermissionMap = {};
-      for (const p of data) {
-        map[p.module_key] = p as any;
+    try {
+      const { data, error } = await supabase
+        .from('user_permissions')
+        .select('*')
+        .eq('user_id', uid);
+      if (error) {
+        console.error('[fetchPermissions] Error:', error.code, error.message, error.details, error.hint);
+        setPermissions({});
+        return;
       }
-      setPermissions(map);
-    } else {
+      if (data) {
+        const map: PermissionMap = {};
+        for (const p of data) {
+          map[p.module_key] = p as any;
+        }
+        setPermissions(map);
+      } else {
+        setPermissions({});
+      }
+    } catch (err) {
+      console.error('[fetchPermissions] Unexpected error:', err);
       setPermissions({});
     }
   }, []);
@@ -125,33 +145,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     let email = input;
     if (!input.includes('@')) {
-      const { data: profileRow } = await supabase
-        .from('user_profiles')
-        .select('email')
-        .eq('username', input)
-        .maybeSingle();
-      if (profileRow?.email) {
-        email = profileRow.email;
-      } else {
-        return { error: 'Kullanıcı adı veya e-posta bulunamadı.' };
+      try {
+        const { data: profileRow, error: lookupError } = await supabase
+          .from('user_profiles')
+          .select('email')
+          .eq('username', input)
+          .maybeSingle();
+        if (lookupError) {
+          console.error('[signIn] Username lookup error:', lookupError.code, lookupError.message, lookupError.details, lookupError.hint);
+          return { error: 'Kullanıcı sorgulanırken bir hata oluştu. Lütfen tekrar deneyin.' };
+        }
+        if (profileRow?.email) {
+          email = profileRow.email;
+        } else {
+          return { error: 'Kullanıcı adı veya e-posta bulunamadı.' };
+        }
+      } catch (err) {
+        console.error('[signIn] Username lookup exception:', err);
+        return { error: 'Kullanıcı sorgulanırken bir hata oluştu.' };
       }
     }
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      return { error: error.message };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        console.error('[signIn] Auth error:', error.message);
+        return { error: error.message };
+      }
+
+      (async () => {
+        try {
+          await supabase.rpc('update_last_login');
+          await supabase.rpc('log_activity', {
+            p_action: 'Giriş',
+            p_module: 'auth',
+            p_details: `Kullanıcı giriş yaptı: ${email}`,
+          });
+        } catch (rpcErr) {
+          console.error('[signIn] RPC error (non-fatal):', rpcErr);
+        }
+      })();
+
+      return { error: null };
+    } catch (err) {
+      console.error('[signIn] Unexpected error:', err);
+      return { error: 'Giriş yapılırken beklenmeyen bir hata oluştu.' };
     }
-
-    (async () => {
-      await supabase.rpc('update_last_login');
-      await supabase.rpc('log_activity', {
-        p_action: 'Giriş',
-        p_module: 'auth',
-        p_details: `Kullanıcı giriş yaptı: ${email}`,
-      });
-    })();
-
-    return { error: null };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
