@@ -38,6 +38,11 @@ export function SettingsClient() {
   const [savingCompany, setSavingCompany] = useState(false);
   const [savingBackup, setSavingBackup] = useState(false);
 
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingSecurity, setSavingSecurity] = useState(false);
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from('system_settings').select('*');
@@ -78,6 +83,42 @@ export function SettingsClient() {
     toast({ title: 'Kaydedildi', description: 'Şirket bilgileri güncellendi.' });
     logActivity('Ayarlar Güncellendi', 'settings', 'Şirket bilgileri');
     setSavingCompany(false);
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast({ title: 'Hata', description: 'Lütfen tüm alanları doldurun.', variant: 'destructive' });
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast({ title: 'Hata', description: 'Yeni şifre en az 6 karakter olmalıdır.', variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'Hata', description: 'Yeni şifre ve tekrarı eşleşmiyor.', variant: 'destructive' });
+      return;
+    }
+    setSavingSecurity(true);
+    try {
+      const { data, error } = await supabase.rpc('change_own_password', {
+        p_current_password: currentPassword,
+        p_new_password: newPassword,
+      });
+      if (error) {
+        toast({ title: 'Hata', description: error.message || 'Şifre değiştirilemedi.', variant: 'destructive' });
+      } else if (data === false) {
+        toast({ title: 'Hata', description: 'Mevcut şifre yanlış.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Başarılı', description: 'Şifreniz güncellendi.' });
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        logActivity('Şifre Değişti', 'settings', 'Güvenlik ayarları');
+      }
+    } catch (err) {
+      toast({ title: 'Hata', description: 'Beklenmeyen bir hata oluştu.', variant: 'destructive' });
+    }
+    setSavingSecurity(false);
   };
 
   const handleSaveBackup = async () => {
@@ -200,11 +241,14 @@ export function SettingsClient() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-4">
-                  <div className="space-y-2"><Label>Mevcut Şifre</Label><Input type="password" placeholder="••••••••" /></div>
-                  <div className="space-y-2"><Label>Yeni Şifre</Label><Input type="password" placeholder="••••••••" /></div>
-                  <div className="space-y-2"><Label>Şifre Tekrar</Label><Input type="password" placeholder="••••••••" /></div>
+                  <div className="space-y-2"><Label>Mevcut Şifre</Label><Input type="password" placeholder="••••••••" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} /></div>
+                  <div className="space-y-2"><Label>Yeni Şifre</Label><Input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /></div>
+                  <div className="space-y-2"><Label>Şifre Tekrar</Label><Input type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></div>
                 </div>
-                <Button className="gap-2"><Save className="h-4 w-4" />Güvenliği Güncelle</Button>
+                <Button onClick={handleChangePassword} disabled={savingSecurity} className="gap-2">
+                  {savingSecurity ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Güvenliği Güncelle
+                </Button>
               </CardContent>
             </Card>
           </motion.div>

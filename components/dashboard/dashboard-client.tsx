@@ -61,21 +61,31 @@ export function DashboardClient() {
     (async () => {
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const yesterdayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString();
 
       const [
-        { data: todaySales }, { data: monthSales }, { data: monthExpenses },
-        { data: outstanding }, { data: customers }, { data: products },
+        { data: todaySales }, { data: yesterdaySales }, { data: monthSales }, { data: lastMonthSales },
+        { data: monthExpenses }, { data: lastMonthExpenses },
+        { data: outstanding }, { data: customers }, { data: lastMonthCustomers }, { data: products },
+        { data: lowStockProducts },
         { data: topProductsData }, { data: latestOrders }, { data: revenueRaw },
         { data: expenseRaw }, { data: categorySales },
       ] = await Promise.all([
         supabase.from('sales').select('total_amount').gte('sale_date', todayStart).eq('status', 'paid'),
+        supabase.from('sales').select('total_amount').gte('sale_date', yesterdayStart).lt('sale_date', todayStart).eq('status', 'paid'),
         supabase.from('sales').select('total_amount').gte('sale_date', monthStart).eq('status', 'paid'),
+        supabase.from('sales').select('total_amount').gte('sale_date', lastMonthStart).lt('sale_date', monthStart).eq('status', 'paid'),
         supabase.from('expenses').select('amount').gte('expense_date', monthStart.slice(0, 10)),
+        supabase.from('expenses').select('amount').gte('expense_date', lastMonthStart.slice(0, 10)).lt('expense_date', monthStart.slice(0, 10)),
         supabase.from('sales').select('total_amount,paid_amount').eq('status', 'pending'),
         supabase.from('customers').select('id', { count: 'exact' }),
+        supabase.from('customers').select('id').lt('created_at', monthStart),
         supabase.from('products').select('cost_price,stock_quantity'),
+        supabase.from('products').select('id').filter('stock_quantity', 'lt', 'min_stock_level').is('deleted_at', null),
         supabase.from('sale_items').select('product_name,quantity,subtotal').gte('created_at', monthStart).order('quantity', { ascending: false }).limit(50),
         supabase.from('sales').select('*,customer:customers(*)').order('sale_date', { ascending: false }).limit(8),
         supabase.from('sales').select('sale_date,total_amount').gte('sale_date', thirtyDaysAgo).order('sale_date', { ascending: true }),
@@ -84,10 +94,28 @@ export function DashboardClient() {
       ]);
 
       const todaySalesTotal = (todaySales || []).reduce((s, r: any) => s + Number(r.total_amount), 0);
+      const yesterdaySalesTotal = (yesterdaySales || []).reduce((s, r: any) => s + Number(r.total_amount), 0);
       const monthSalesTotal = (monthSales || []).reduce((s, r: any) => s + Number(r.total_amount), 0);
+      const lastMonthSalesTotal = (lastMonthSales || []).reduce((s, r: any) => s + Number(r.total_amount), 0);
       const monthExpensesTotal = (monthExpenses || []).reduce((s, r: any) => s + Number(r.amount), 0);
+      const lastMonthExpensesTotal = (lastMonthExpenses || []).reduce((s, r: any) => s + Number(r.amount), 0);
       const outstandingTotal = (outstanding || []).reduce((s, r: any) => s + (Number(r.total_amount) - Number(r.paid_amount)), 0);
       const stockValue = (products || []).reduce((s, r: any) => s + Number(r.cost_price) * Number(r.stock_quantity), 0);
+      const lowStockCount = lowStockProducts?.length || 0;
+      const lastMonthProfit = lastMonthSalesTotal - lastMonthExpensesTotal;
+      const thisMonthProfit = monthSalesTotal - monthExpensesTotal;
+
+      const pct = (curr: number, prev: number): { change: string; trend: 'up' | 'down' } => {
+        if (prev === 0) return { change: curr > 0 ? '+∞' : '0%', trend: curr > 0 ? 'up' : 'down' };
+        const diff = ((curr - prev) / Math.abs(prev)) * 100;
+        const sign = diff >= 0 ? '+' : '';
+        return { change: `${sign}${diff.toFixed(1)}%`, trend: diff >= 0 ? 'up' : 'down' };
+      };
+      const todayPct = pct(todaySalesTotal, yesterdaySalesTotal);
+      const monthSalesPct = pct(monthSalesTotal, lastMonthSalesTotal);
+      const expensesPct = pct(monthExpensesTotal, lastMonthExpensesTotal);
+      const profitPct = pct(thisMonthProfit, lastMonthProfit);
+      const customerPct = pct(customers?.length || 0, lastMonthCustomers?.length || 0);
 
       const productMap = new Map<string, { quantity: number; revenue: number }>();
       (topProductsData || []).forEach((item: any) => {
@@ -123,9 +151,10 @@ export function DashboardClient() {
 
       setStats({
         todaySales: todaySalesTotal, monthlySales: monthSalesTotal, expenses: monthExpensesTotal,
-        profit: monthSalesTotal - monthExpensesTotal, outstandingPayments: outstandingTotal,
+        profit: thisMonthProfit, outstandingPayments: outstandingTotal,
         customerCount: customers?.length || 0, stockValue, topProducts,
         latestOrders: (latestOrders || []) as any, revenueData, salesByCategory, cashFlowData,
+        lowStockCount, todayPct, monthSalesPct, expensesPct, profitPct, customerPct,
       });
       setLoading(false);
     })();
@@ -152,17 +181,17 @@ export function DashboardClient() {
 
       {/* İstatistik kartları */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Bugünkü Satışlar" value={formatCurrency(stats.todaySales)} change="+12.5%" trend="up" icon={<DollarSign className="h-5 w-5" />} delay={0} />
-        <StatCard title="Aylık Satışlar" value={formatCurrency(stats.monthlySales)} change="+8.2%" trend="up" icon={<TrendingUp className="h-5 w-5" />} delay={0.05} />
-        <StatCard title="Giderler" value={formatCurrency(stats.expenses)} change="-3.1%" trend="down" icon={<TrendingDown className="h-5 w-5" />} delay={0.1} />
-        <StatCard title="Kâr" value={formatCurrency(stats.profit)} change="+15.7%" trend="up" icon={<Wallet className="h-5 w-5" />} delay={0.15} />
+        <StatCard title="Bugünkü Satışlar" value={formatCurrency(stats.todaySales)} change={stats.todayPct.change} trend={stats.todayPct.trend} icon={<DollarSign className="h-5 w-5" />} delay={0} />
+        <StatCard title="Aylık Satışlar" value={formatCurrency(stats.monthlySales)} change={stats.monthSalesPct.change} trend={stats.monthSalesPct.trend} icon={<TrendingUp className="h-5 w-5" />} delay={0.05} />
+        <StatCard title="Giderler" value={formatCurrency(stats.expenses)} change={stats.expensesPct.change} trend={stats.expensesPct.trend} icon={<TrendingDown className="h-5 w-5" />} delay={0.1} />
+        <StatCard title="Kâr" value={formatCurrency(stats.profit)} change={stats.profitPct.change} trend={stats.profitPct.trend} icon={<Wallet className="h-5 w-5" />} delay={0.15} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Bekleyen Ödemeler" value={formatCurrency(stats.outstandingPayments)} icon={<AlertCircle className="h-5 w-5" />} delay={0.2} />
-        <StatCard title="Müşteri Sayısı" value={stats.customerCount.toString()} change="+4" trend="up" icon={<Users className="h-5 w-5" />} delay={0.25} />
+        <StatCard title="Müşteri Sayısı" value={stats.customerCount.toString()} change={stats.customerPct.change} trend={stats.customerPct.trend} icon={<Users className="h-5 w-5" />} delay={0.25} />
         <StatCard title="Stok Değeri" value={formatCompactCurrency(stats.stockValue)} icon={<Package className="h-5 w-5" />} delay={0.3} />
-        <StatCard title="Düşük Stok" value="3" change="İşlem gerekli" trend="down" icon={<AlertCircle className="h-5 w-5" />} delay={0.35} />
+        <StatCard title="Düşük Stok" value={stats.lowStockCount.toString()} change="İşlem gerekli" trend="down" icon={<AlertCircle className="h-5 w-5" />} delay={0.35} />
       </div>
 
       {/* Grafikler */}

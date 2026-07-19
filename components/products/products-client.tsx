@@ -18,6 +18,7 @@ import {
 import { PageHeader } from '@/components/shared/page-header';
 import { ConfirmDialog, useConfirmDialog } from '@/components/shared/confirm-dialog';
 import { EmptyState } from '@/components/shared/states';
+import { ExcelActions } from '@/components/shared/excel-actions';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/format';
 import type { Product, Category, Brand, Supplier } from '@/lib/types';
@@ -196,6 +197,38 @@ export function ProductsClient() {
             <SelectItem value="out">Stok Tükendi</SelectItem>
           </SelectContent>
         </Select>
+        <ExcelActions
+          data={filtered}
+          allData={products}
+          moduleKey="products"
+          filename="urunler"
+          sheetName="Ürünler"
+          columns={[
+            { key: 'name', label: 'Ad', width: 30 },
+            { key: 'sku', label: 'SKU', width: 20 },
+            { key: 'description', label: 'Açıklama', width: 40 },
+            { key: 'cost_price', label: 'Maliyet', width: 12, format: 'currency' },
+            { key: 'sale_price', label: 'Satış Fiyatı', width: 12, format: 'currency' },
+            { key: 'stock_quantity', label: 'Stok', width: 10, format: 'number' },
+            { key: 'min_stock_level', label: 'Min Stok', width: 10, format: 'number' },
+            { key: 'unit', label: 'Birim', width: 10 },
+          ]}
+          importColumns={{ name: 'Ad', sku: 'SKU', description: 'Açıklama', cost_price: 'Maliyet', sale_price: 'Satış', stock_quantity: 'Stok', min_stock_level: 'Min', unit: 'Birim' }}
+          onImport={async (rows) => {
+            const payload = rows.map((r: any) => ({
+              name: r.name || 'İsimsiz',
+              sku: r.sku || crypto.randomUUID().slice(0, 8),
+              description: r.description || null,
+              cost_price: Number(r.cost_price) || 0,
+              sale_price: Number(r.sale_price) || 0,
+              stock_quantity: Number(r.stock_quantity) || 0,
+              min_stock_level: Number(r.min_stock_level) || 0,
+              unit: r.unit || 'adet',
+            }));
+            const { data } = await supabase.from('products').insert(payload).select();
+            if (data) setProducts((prev) => [...data, ...prev]);
+          }}
+        />
       </div>
 
       <Card className="glass">

@@ -265,6 +265,12 @@ export interface DashboardStats {
   outstandingPayments: number;
   customerCount: number;
   stockValue: number;
+  lowStockCount: number;
+  todayPct: { change: string; trend: 'up' | 'down' };
+  monthSalesPct: { change: string; trend: 'up' | 'down' };
+  expensesPct: { change: string; trend: 'up' | 'down' };
+  profitPct: { change: string; trend: 'up' | 'down' };
+  customerPct: { change: string; trend: 'up' | 'down' };
   topProducts: { name: string; quantity: number; revenue: number }[];
   latestOrders: (Sale & { customer?: Customer | null })[];
   revenueData: { date: string; revenue: number; expenses: number; profit: number }[];
